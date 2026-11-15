@@ -71,7 +71,11 @@ class TransactionModel {
       )
       .where('transaction_items.transaction_id', id);
 
-    return { ...transaction, items };
+    const payments = await db('transaction_payments')
+      .where('transaction_id', id)
+      .orderBy('id', 'asc');
+
+    return { ...transaction, items, payments };
   }
 
   static async updatePaymentStatus(id, status) {

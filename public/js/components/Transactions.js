@@ -23,7 +23,7 @@ const TransactionsComponent = {
                     <td>${t.cashier_name} <span class="badge badge-info">${t.cashier_role}</span></td>
                     <td>${t.customer_name || '-'}</td>
                     <td>${Format.currency(t.total_amount)}</td>
-                    <td><span class="badge badge-info">${t.payment_method}</span></td>
+                    <td><span class="badge ${t.is_split || t.payment_method === 'SPLIT' ? 'badge-primary' : 'badge-info'}">${t.is_split ? '⚡ SPLIT' : t.payment_method}</span></td>
                     <td><span class="badge ${t.payment_status === 'paid' ? 'badge-success' : t.payment_status === 'cancelled' ? 'badge-danger' : 'badge-warning'}">${t.payment_status}</span></td>
                     <td>${Format.datetime(t.transaction_date)}</td>
                     <td>
@@ -62,11 +62,21 @@ const TransactionsComponent = {
           </table>
           <hr style="border-style:dashed;margin:8px 0">
           <table style="width:100%;font-size:13px">
-            <tr><td><strong>Total</strong></td><td style="text-align:right"><strong>${Format.currency(t.total_amount)}</strong></td></tr>
-            <tr><td>Metode</td><td style="text-align:right">${t.payment_method}</td></tr>
-            <tr><td>Dibayar</td><td style="text-align:right">${Format.currency(t.amount_paid)}</td></tr>
-            ${t.change_amount > 0 ? `<tr><td>Kembalian</td><td style="text-align:right">${Format.currency(t.change_amount)}</td></tr>` : ''}
-            <tr><td>Status</td><td style="text-align:right"><span class="badge ${t.payment_status === 'paid' ? 'badge-success' : 'badge-warning'}">${t.payment_status}</span></td></tr>
+            <tr><td><strong>Total Tagihan</strong></td><td style="text-align:right"><strong>${Format.currency(t.total_amount)}</strong></td></tr>
+            ${t.payments && t.payments.length > 0 ? `
+              <tr><td colspan="2" style="padding-top:6px; font-weight:600; color:#475569; font-size:12px;">Rincian Pembayaran (Multi-Journal):</td></tr>
+              ${t.payments.map(p => `
+                <tr style="font-size:12px; color:#334155;">
+                  <td style="padding-left:10px;">• [${p.journal_code}] ${p.payment_method}</td>
+                  <td style="text-align:right;">${Format.currency(p.amount)} ${p.change_amount > 0 ? `<small style="color:#64748b;">(Uang: ${Format.currency(p.tendered_amount)})</small>` : ''}</td>
+                </tr>
+              `).join('')}
+            ` : `
+              <tr><td>Metode</td><td style="text-align:right">${t.payment_method}</td></tr>
+              <tr><td>Dibayar</td><td style="text-align:right">${Format.currency(t.amount_paid)}</td></tr>
+            `}
+            ${t.change_amount > 0 ? `<tr><td><strong>Kembalian Tunai</strong></td><td style="text-align:right; color:#10b981; font-weight:700;">${Format.currency(t.change_amount)}</td></tr>` : ''}
+            <tr><td>Status</td><td style="text-align:right"><span class="badge ${t.payment_status === 'paid' ? 'badge-success' : 'badge-warning'}">${t.payment_status.toUpperCase()}</span></td></tr>
           </table>
           <div class="receipt-footer"><p>Terima kasih!</p></div>
         </div>`;

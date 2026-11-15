@@ -60,11 +60,34 @@ const POSComponent = {
                 <button class="payment-method-btn active" onclick="POSComponent.setPayment('CASH')">CASH</button>
                 <button class="payment-method-btn" onclick="POSComponent.setPayment('TRANSFER')">TRANSFER</button>
                 <button class="payment-method-btn" onclick="POSComponent.setPayment('QRIS')">QRIS</button>
+                <button class="payment-method-btn" onclick="POSComponent.setPayment('SPLIT')">⚡ SPLIT</button>
               </div>
             </div>
             <div class="cash-input visible" id="cashInput">
               <label>Uang Dibayar</label>
               <input type="number" id="amountPaid" placeholder="0" oninput="POSComponent.calcChange()">
+            </div>
+            <div class="split-input" id="splitInput" style="display:none; margin-top:10px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+              <div style="font-size:12px; font-weight:600; color:#334155; margin-bottom:8px;">Alokasi Multi-Payment (Split):</div>
+              <div style="margin-bottom:6px;">
+                <label style="font-size:11px; display:flex; justify-content:space-between;">
+                  <span>💵 Tunai / Cash (CSH1)</span>
+                  <span style="color:#64748b;">(Bayar / Uang Diterima)</span>
+                </label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                  <input type="number" id="splitCashAmount" placeholder="Nominal Bayar" oninput="POSComponent.calcSplit()" style="font-size:12px; padding:4px 6px;">
+                  <input type="number" id="splitCashTendered" placeholder="Uang Diterima" oninput="POSComponent.calcSplit()" style="font-size:12px; padding:4px 6px;">
+                </div>
+              </div>
+              <div style="margin-bottom:6px;">
+                <label style="font-size:11px;">📱 QRIS & EDC (QRIS1)</label>
+                <input type="number" id="splitQrisAmount" placeholder="Nominal QRIS" oninput="POSComponent.calcSplit()" style="font-size:12px; padding:4px 6px;">
+              </div>
+              <div style="margin-bottom:6px;">
+                <label style="font-size:11px;">🏦 Transfer Bank (BNK1)</label>
+                <input type="number" id="splitTransferAmount" placeholder="Nominal Transfer" oninput="POSComponent.calcSplit()" style="font-size:12px; padding:4px 6px;">
+              </div>
+              <div id="splitStatusBox" style="font-size:12px; margin-top:6px; padding:6px; border-radius:4px; font-weight:600;"></div>
             </div>
             <div class="change-display" id="changeDisplay">Kembalian: ${Format.currency(0)}</div>
             <div style="margin-bottom:10px;">
@@ -189,12 +212,57 @@ const POSComponent = {
   setPayment(method) {
     this.paymentMethod = method;
     document.querySelectorAll('.payment-method-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent === method);
+      btn.classList.toggle('active', btn.textContent.includes(method));
     });
     const cashInput = document.getElementById('cashInput');
-    cashInput.classList.toggle('visible', method === 'CASH');
-    if (method !== 'CASH') {
-      document.getElementById('changeDisplay').classList.remove('visible');
+    const splitInput = document.getElementById('splitInput');
+    const changeDisplay = document.getElementById('changeDisplay');
+
+    if (method === 'CASH') {
+      cashInput.style.display = 'block';
+      splitInput.style.display = 'none';
+      this.calcChange();
+    } else if (method === 'SPLIT') {
+      cashInput.style.display = 'none';
+      splitInput.style.display = 'block';
+      changeDisplay.classList.remove('visible');
+      this.calcSplit();
+    } else {
+      cashInput.style.display = 'none';
+      splitInput.style.display = 'none';
+      changeDisplay.classList.remove('visible');
+    }
+  },
+
+  calcSplit() {
+    if (this.paymentMethod !== 'SPLIT') return;
+    const total = this.cart.reduce((s, c) => s + c.price * c.quantity, 0);
+
+    const cashPay = parseFloat(document.getElementById('splitCashAmount')?.value) || 0;
+    const cashTender = parseFloat(document.getElementById('splitCashTendered')?.value) || cashPay;
+    const qrisPay = parseFloat(document.getElementById('splitQrisAmount')?.value) || 0;
+    const transferPay = parseFloat(document.getElementById('splitTransferAmount')?.value) || 0;
+
+    const totalCovered = cashPay + qrisPay + transferPay;
+    const remaining = total - totalCovered;
+    const cashChange = cashTender > cashPay ? (cashTender - cashPay) : 0;
+
+    const statusBox = document.getElementById('splitStatusBox');
+    if (!statusBox) return;
+
+    if (total === 0) {
+      statusBox.innerHTML = '<span style="color:#94a3b8;">Keranjang belanja masih kosong.</span>';
+      return;
+    }
+
+    if (remaining <= 0) {
+      statusBox.style.background = '#dcfce7';
+      statusBox.style.color = '#15803d';
+      statusBox.innerHTML = `✅ Tagihan LUNAS! ${cashChange > 0 ? `| Kembalian Tunai: <strong>${Format.currency(cashChange)}</strong>` : ''}`;
+    } else {
+      statusBox.style.background = '#fee2e2';
+      statusBox.style.color = '#b91c1c';
+      statusBox.innerHTML = `⚠️ Kurang <strong>${Format.currency(remaining)}</strong> dari total ${Format.currency(total)}`;
     }
   },
 
@@ -229,31 +297,56 @@ const POSComponent = {
     }
 
     const total = this.cart.reduce((s, c) => s + c.price * c.quantity, 0);
-    const amountPaid = this.paymentMethod === 'CASH'
-      ? parseFloat(document.getElementById('amountPaid').value) || 0
-      : total;
-
-    if (this.paymentMethod === 'CASH' && amountPaid < total) {
-      App.toast('Pembayaran kurang!', 'error');
-      return;
-    }
-
     const txDateVal = document.getElementById('txDate')?.value;
     const transactionDate = txDateVal ? new Date(txDateVal).toISOString() : undefined;
+    const customerName = document.getElementById('customerName')?.value || null;
+
+    let payload = {
+      items: this.cart.map(c => ({ productUnitId: c.productUnitId, quantity: c.quantity })),
+      customerName,
+      transactionDate
+    };
+
+    if (this.paymentMethod === 'SPLIT') {
+      const cashPay = parseFloat(document.getElementById('splitCashAmount')?.value) || 0;
+      const cashTender = parseFloat(document.getElementById('splitCashTendered')?.value) || cashPay;
+      const qrisPay = parseFloat(document.getElementById('splitQrisAmount')?.value) || 0;
+      const transferPay = parseFloat(document.getElementById('splitTransferAmount')?.value) || 0;
+
+      const totalCovered = cashPay + qrisPay + transferPay;
+      if (totalCovered < total) {
+        App.toast(`Pembayaran kurang! Butuh ${Format.currency(total)}, baru teralokasi ${Format.currency(totalCovered)}`, 'error');
+        return;
+      }
+
+      const payments = [];
+      if (cashPay > 0) payments.push({ method: 'CASH', amount: cashPay, tenderedAmount: cashTender });
+      if (qrisPay > 0) payments.push({ method: 'QRIS', amount: qrisPay, tenderedAmount: qrisPay });
+      if (transferPay > 0) payments.push({ method: 'TRANSFER', amount: transferPay, tenderedAmount: transferPay });
+
+      payload.paymentMethod = 'SPLIT';
+      payload.payments = payments;
+    } else {
+      const amountPaid = this.paymentMethod === 'CASH'
+        ? parseFloat(document.getElementById('amountPaid').value) || 0
+        : total;
+
+      if (this.paymentMethod === 'CASH' && amountPaid < total) {
+        App.toast('Pembayaran kurang!', 'error');
+        return;
+      }
+
+      payload.paymentMethod = this.paymentMethod;
+      payload.amountPaid = amountPaid;
+    }
 
     try {
-      const res = await API.post('/api/transactions/checkout', {
-        items: this.cart.map(c => ({ productUnitId: c.productUnitId, quantity: c.quantity })),
-        paymentMethod: this.paymentMethod,
-        amountPaid,
-        customerName: document.getElementById('customerName').value || null,
-        transactionDate
-      });
+      const res = await API.post('/api/transactions/checkout', payload);
 
       if (res.success) {
         const data = res.data;
-        const changeText = this.paymentMethod === 'CASH' ? `\nKembalian: ${Format.currency(data.changeAmount)}` : '';
-        App.toast(`Transaksi #${data.transactionId} berhasil! Total: ${Format.currency(data.totalAmount)}${changeText}`);
+        const changeText = data.changeAmount > 0 ? `\nKembalian: ${Format.currency(data.changeAmount)}` : '';
+        App.toast(`Transaksi #${data.transactionId} berhasil! (${data.paymentMethod}) Total: ${Format.currency(data.totalAmount)}${changeText}`, 'success');
 
         // Reset cart
         this.cart = [];

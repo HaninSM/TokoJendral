@@ -1,7 +1,7 @@
 /**
  * Purchases component - manage inbound stock (restock) from suppliers.
  * Owner creates purchases which automatically generate FIFO inventory batches.
- * Integrated with Master Items (e.g. XXX with base unit Meter).
+ * Integrated with Payment Terms (Net 30, Net 15, COD), Due Dates, and Debt Installments.
  */
 const PurchasesComponent = {
   masterItems: [],
@@ -17,20 +17,88 @@ const PurchasesComponent = {
       const res = await API.get('/api/purchases');
       const purchases = res.data;
 
+      const totalHutang = purchases
+        .filter(p => p.payment_status !== 'paid')
+        .reduce((sum, p) => sum + (parseFloat(p.total_cost) - (parseFloat(p.amount_paid) || 0)), 0);
+
       content.innerHTML = `
+        <div class="stats-grid" style="margin-bottom: 20px;">
+          <div class="stat-card">
+            <div class="stat-icon blue">📦</div>
+            <div class="stat-info">
+              <h4>${purchases.length} Nota</h4>
+              <p>Total Transaksi Pembelian</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">⏳</div>
+            <div class="stat-info">
+              <h4>${Format.currency(totalHutang)}</h4>
+              <p>Total Hutang Supplier Berjalan</p>
+            </div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="table-container">
             <table>
-              <thead><tr><th>ID</th><th>Supplier</th><th>Tanggal</th><th>Total Biaya</th><th>Dibuat oleh</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>No. PO</th>
+                  <th>Supplier</th>
+                  <th>Tgl Beli</th>
+                  <th>Jatuh Tempo</th>
+                  <th>Termin</th>
+                  <th>Total Biaya</th>
+                  <th>Dibayar</th>
+                  <th>Status Pembayaran</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
               <tbody>
-                ${purchases.length === 0 ? '<tr><td colspan="5" class="empty-state">Belum ada pembelian tercatat.</td></tr>' :
-                  purchases.map(p => `<tr>
-                    <td><strong>#${p.id}</strong></td>
-                    <td>${p.supplier_name}</td>
-                    <td>${Format.date(p.purchase_date)}</td>
-                    <td><strong style="color:var(--primary)">${Format.currency(p.total_cost)}</strong></td>
-                    <td>${p.created_by}</td>
-                  </tr>`).join('')}
+                ${purchases.length === 0 ? '<tr><td colspan="9" class="empty-state">Belum ada pembelian tercatat.</td></tr>' :
+                  purchases.map(p => {
+                    const totalCost = parseFloat(p.total_cost);
+                    const amountPaid = parseFloat(p.amount_paid) || 0;
+                    const remaining = totalCost - amountPaid;
+
+                    let statusBadge = '<span class="badge badge-success">Lunas</span>';
+                    if (p.payment_status === 'not_paid') {
+                      statusBadge = '<span class="badge badge-danger">Hutang (Tempo)</span>';
+                    } else if (p.payment_status === 'partially_paid') {
+                      statusBadge = `<span class="badge badge-warning">Sebagian (Sisa: ${Format.currency(remaining)})</span>`;
+                    }
+
+                    const termLabel = {
+                      cash: 'Tunai / COD',
+                      net_15: 'Net 15 Hari',
+                      net_30: 'Net 30 Hari',
+                      net_60: 'Net 60 Hari',
+                      custom: 'Tempo Khusus'
+                    }[p.payment_term] || p.payment_term || 'Tunai';
+
+                    return `<tr>
+                      <td><strong>#${p.id}</strong></td>
+                      <td><strong>${p.supplier_name}</strong></td>
+                      <td>${Format.date(p.purchase_date)}</td>
+                      <td>${p.due_date ? Format.date(p.due_date) : '-'}</td>
+                      <td><small style="color:#64748b;">${termLabel}</small></td>
+                      <td><strong>${Format.currency(p.total_cost)}</strong></td>
+                      <td>${Format.currency(amountPaid)}</td>
+                      <td>${statusBadge}</td>
+                      <td>
+                        ${remaining > 0 ? `
+                          <button class="btn btn-sm btn-primary" onclick="PurchasesComponent.showPayModal(${p.id}, '${p.supplier_name}', ${totalCost}, ${amountPaid})" title="Bayar Tagihan Supplier">
+                            💳 Bayar
+                          </button>
+                        ` : `
+                          <button class="btn btn-sm btn-secondary" onclick="PurchasesComponent.showHistoryModal(${p.id})" title="Lihat Riwayat Pembayaran">
+                            📜 Riwayat
+                          </button>
+                        `}
+                      </td>
+                    </tr>`;
+                  }).join('')}
               </tbody>
             </table>
           </div>
@@ -56,23 +124,50 @@ const PurchasesComponent = {
       return;
     }
 
+    const today = Format.localDate();
+    const d30 = new Date();
+    d30.setDate(d30.getDate() + 30);
+    const date30Str = d30.toISOString().slice(0, 10);
+
     const body = `
       <form id="purchaseForm">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
           <div class="form-group">
-            <label>Supplier</label>
-            <select id="pSupplierId" required>
+            <label>Supplier / Pemasok*</label>
+            <select id="pSupplierId" class="form-control" required>
               ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
-            <label>Tanggal Pembelian</label>
-            <input type="date" id="pDate" value="${Format.localDate()}" required>
+            <label>Tanggal Pembelian*</label>
+            <input type="date" id="pDate" class="form-control" value="${today}" onchange="PurchasesComponent.onTermChange()" required>
           </div>
         </div>
-        <div class="form-group">
-          <label>Catatan</label>
-          <textarea id="pNotes" placeholder="Catatan pembelian (opsional)" style="min-height:50px;"></textarea>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:8px;">
+          <div class="form-group">
+            <label>Syarat Pembayaran (Termin)*</label>
+            <select id="pPaymentTerm" class="form-control" onchange="PurchasesComponent.onTermChange()">
+              <option value="net_30" selected>Tempo Net 30 Hari</option>
+              <option value="net_15">Tempo Net 15 Hari</option>
+              <option value="net_60">Tempo Net 60 Hari</option>
+              <option value="custom">Tempo Khusus (Custom)</option>
+              <option value="cash">Tunai / COD (Lunas di Muka)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tanggal Jatuh Tempo</label>
+            <input type="date" id="pDueDate" class="form-control" value="${date30Str}">
+          </div>
+          <div class="form-group">
+            <label>Uang Muka / DP Dibayar (Rp)</label>
+            <input type="number" id="pAmountPaid" class="form-control" value="0" min="0" step="1000">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:8px;">
+          <label>Catatan Pembelian</label>
+          <textarea id="pNotes" class="form-control" placeholder="Catatan PO / faktur supplier (opsional)" style="min-height:50px;"></textarea>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 8px;">
@@ -96,9 +191,44 @@ const PurchasesComponent = {
       <button class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
       <button class="btn btn-primary" onclick="PurchasesComponent.submitPurchase()">Simpan Pembelian</button>`;
 
-    App.showModal('Pembelian Baru / Restock', body, footer, 'modal-lg');
+    App.showModal('Pembelian Baru / Restock Gudang', body, footer, 'modal-lg');
     this.itemIndex = 0;
     this.addItemRow();
+  },
+
+  onTermChange() {
+    const term = document.getElementById('pPaymentTerm')?.value;
+    const pDateVal = document.getElementById('pDate')?.value;
+    const dueDateInput = document.getElementById('pDueDate');
+    const amountPaidInput = document.getElementById('pAmountPaid');
+    if (!dueDateInput || !pDateVal) return;
+
+    const pDate = new Date(pDateVal);
+    if (term === 'net_15') {
+      pDate.setDate(pDate.getDate() + 15);
+      dueDateInput.value = pDate.toISOString().slice(0, 10);
+      dueDateInput.disabled = false;
+      if (amountPaidInput) amountPaidInput.value = 0;
+    } else if (term === 'net_30') {
+      pDate.setDate(pDate.getDate() + 30);
+      dueDateInput.value = pDate.toISOString().slice(0, 10);
+      dueDateInput.disabled = false;
+      if (amountPaidInput) amountPaidInput.value = 0;
+    } else if (term === 'net_60') {
+      pDate.setDate(pDate.getDate() + 60);
+      dueDateInput.value = pDate.toISOString().slice(0, 10);
+      dueDateInput.disabled = false;
+      if (amountPaidInput) amountPaidInput.value = 0;
+    } else if (term === 'cash') {
+      dueDateInput.value = pDateVal;
+      dueDateInput.disabled = true;
+      // Auto-fill full cost
+      const totalDisplay = document.getElementById('pTotalCostDisplay')?.textContent || '0';
+      const cleanNum = parseFloat(totalDisplay.replace(/[^0-9]/g, '')) || 0;
+      if (amountPaidInput) amountPaidInput.value = cleanNum;
+    } else {
+      dueDateInput.disabled = false;
+    }
   },
 
   itemIndex: 0,
@@ -185,6 +315,13 @@ const PurchasesComponent = {
 
     const display = document.getElementById('pTotalCostDisplay');
     if (display) display.textContent = Format.currency(grandTotal);
+
+    // If cash is selected, update amountPaid
+    const term = document.getElementById('pPaymentTerm')?.value;
+    const amountPaidInput = document.getElementById('pAmountPaid');
+    if (term === 'cash' && amountPaidInput) {
+      amountPaidInput.value = grandTotal;
+    }
   },
 
   async submitPurchase() {
@@ -218,23 +355,136 @@ const PurchasesComponent = {
     }
 
     try {
+      const paymentTerm = document.getElementById('pPaymentTerm').value;
+      const dueDate = document.getElementById('pDueDate').value;
+      const amountPaid = parseFloat(document.getElementById('pAmountPaid').value) || 0;
+
       const res = await API.post('/api/purchases', {
         supplierId: parseInt(document.getElementById('pSupplierId').value),
         purchaseDate: document.getElementById('pDate').value,
+        paymentTerm,
+        dueDate,
+        amountPaid,
         notes: document.getElementById('pNotes').value,
         items
       });
 
-      if (res && res.data && res.data.autoUpdatedPrices && res.data.autoUpdatedPrices.length > 0) {
-        const count = res.data.autoUpdatedPrices.length;
-        const details = res.data.autoUpdatedPrices.map(p => `${p.unitName}: ${Format.currency(p.newPrice)}`).join(', ');
-        App.toast(`Pembelian berhasil! ${count} harga jual satuan (% margin) otomatis diperbarui: ${details}`);
-      } else {
-        App.toast('Pembelian berhasil dicatat dan stok masuk ke gudang!');
-      }
       App.closeModal();
+      App.toast('Pembelian berhasil dicatat dan stok masuk ke gudang!', 'success');
       this.itemIndex = 0;
       this.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+    }
+  },
+
+  showPayModal(purchaseId, supplierName, totalCost, amountPaid) {
+    const remaining = totalCost - amountPaid;
+    const today = Format.localDate();
+
+    const body = `
+      <form id="payDebtForm" onsubmit="event.preventDefault(); PurchasesComponent.submitPayment(${purchaseId});">
+        <div style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:14px; font-size:13px;">
+          <div>Supplier: <strong>${supplierName}</strong> (PO #${purchaseId})</div>
+          <div>Total Tagihan: <strong>${Format.currency(totalCost)}</strong></div>
+          <div>Sudah Dibayar: <strong>${Format.currency(amountPaid)}</strong></div>
+          <div style="color:#ef4444; font-size:15px; margin-top:4px;">Sisa Hutang: <strong>${Format.currency(remaining)}</strong></div>
+        </div>
+
+        <div class="form-group">
+          <label>Tanggal Pembayaran*</label>
+          <input type="date" id="debtPayDate" class="form-control" value="${today}" required>
+        </div>
+        <div class="form-group">
+          <label>Jumlah yang Dibayar (Rp)*</label>
+          <input type="number" id="debtPayAmount" class="form-control" value="${remaining}" max="${remaining}" min="1" step="1000" required>
+        </div>
+        <div class="form-group">
+          <label>Metode Pembayaran</label>
+          <select id="debtPayMethod" class="form-control">
+            <option value="BANK" selected>Transfer Bank Bisnis</option>
+            <option value="CASH">Kas Tunai Toko</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Catatan Pembayaran</label>
+          <input type="text" id="debtPayNotes" class="form-control" placeholder="Contoh: Pelunasan termin Net 30 transfer BCA">
+        </div>
+
+        <div class="modal-footer" style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitDebtPay">💳 Konfirmasi Pembayaran</button>
+        </div>
+      </form>
+    `;
+
+    App.showModal('Pembayaran Hutang Supplier', body);
+  },
+
+  async submitPayment(purchaseId) {
+    const btn = document.getElementById('btnSubmitDebtPay');
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+
+    try {
+      const paymentDate = document.getElementById('debtPayDate').value;
+      const amount = parseFloat(document.getElementById('debtPayAmount').value);
+      const paymentMethod = document.getElementById('debtPayMethod').value;
+      const notes = document.getElementById('debtPayNotes').value;
+
+      await API.post(`/api/purchases/${purchaseId}/payments`, {
+        paymentDate,
+        amount,
+        paymentMethod,
+        notes
+      });
+
+      App.closeModal();
+      App.toast('Pembayaran hutang berhasil dicatat!', 'success');
+      this.render();
+    } catch (err) {
+      App.toast(err.message, 'error');
+      btn.disabled = false;
+      btn.textContent = '💳 Konfirmasi Pembayaran';
+    }
+  },
+
+  async showHistoryModal(purchaseId) {
+    try {
+      const res = await API.get(`/api/purchases/${purchaseId}/payments`);
+      const payments = res.data || [];
+
+      const body = `
+        <div style="margin-bottom:12px;">Riwayat Pembayaran PO #${purchaseId}:</div>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="border-bottom:2px solid #e2e8f0; text-align:left;">
+              <th style="padding:6px;">Tanggal</th>
+              <th style="padding:6px;">Nominal</th>
+              <th style="padding:6px;">Metode</th>
+              <th style="padding:6px;">Dicatat Oleh</th>
+              <th style="padding:6px;">Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${payments.length === 0 ? '<tr><td colspan="5" style="padding:15px; text-align:center; color:#94a3b8;">Belum ada riwayat pembayaran tercatat.</td></tr>' :
+              payments.map(p => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:6px;">${Format.date(p.payment_date)}</td>
+                  <td style="padding:6px; font-weight:600; color:#10b981;">${Format.currency(p.amount)}</td>
+                  <td style="padding:6px;"><span class="badge badge-info">${p.payment_method}</span></td>
+                  <td style="padding:6px;">${p.created_by || '-'}</td>
+                  <td style="padding:6px;">${p.notes || '-'}</td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:20px; text-align:right;">
+          <button class="btn btn-secondary" onclick="App.closeModal()">Tutup</button>
+        </div>
+      `;
+
+      App.showModal(`Riwayat Pembayaran Tagihan PO #${purchaseId}`, body);
     } catch (err) {
       App.toast(err.message, 'error');
     }

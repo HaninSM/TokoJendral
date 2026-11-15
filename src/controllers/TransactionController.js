@@ -7,7 +7,8 @@ const TransactionController = {
     body('items').isArray({ min: 1 }).withMessage('Minimal 1 item transaksi.'),
     body('items.*.productUnitId').isInt({ min: 1 }).withMessage('Product unit ID wajib diisi.'),
     body('items.*.quantity').isFloat({ gt: 0 }).withMessage('Jumlah harus lebih dari 0.'),
-    body('paymentMethod').isIn(['CASH', 'TRANSFER', 'QRIS']).withMessage('Metode pembayaran tidak valid.'),
+    body('paymentMethod').optional().isIn(['CASH', 'TRANSFER', 'QRIS', 'SPLIT']).withMessage('Metode pembayaran tidak valid.'),
+    body('payments').optional().isArray().withMessage('Format split payments harus berupa array.'),
     body('transactionDate').optional({ checkFalsy: true }).isISO8601().withMessage('Format tanggal transaksi tidak valid.')
   ],
 

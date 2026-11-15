@@ -16,10 +16,46 @@ class InventoryService {
    *   - costPerUnit: cost per bulk unit (e.g., 500000 per roll)
    *   - baseUnitConversion: how many base units per bulk unit (e.g., 50 meters per roll)
    */
-  static async recordPurchase({ supplierId, userId, purchaseDate, notes, items }) {
+  static async recordPurchase({ supplierId, userId, purchaseDate, notes, items, paymentTerm = 'cash', dueDate = null, amountPaid = null }) {
     return db.transaction(async (trx) => {
       // Calculate total cost
       const totalCost = items.reduce((sum, item) => sum + (item.quantity * item.costPerUnit), 0);
+
+      // Determine due date based on payment term
+      let resolvedDueDate = dueDate;
+      if (!resolvedDueDate) {
+        const pDate = new Date(purchaseDate);
+        if (paymentTerm === 'net_15') {
+          pDate.setDate(pDate.getDate() + 15);
+          resolvedDueDate = pDate.toISOString().slice(0, 10);
+        } else if (paymentTerm === 'net_30') {
+          pDate.setDate(pDate.getDate() + 30);
+          resolvedDueDate = pDate.toISOString().slice(0, 10);
+        } else if (paymentTerm === 'net_60') {
+          pDate.setDate(pDate.getDate() + 60);
+          resolvedDueDate = pDate.toISOString().slice(0, 10);
+        } else {
+          resolvedDueDate = purchaseDate;
+        }
+      }
+
+      // Determine initial amount paid and payment status
+      let resolvedAmountPaid = 0;
+      let paymentStatus = 'not_paid';
+
+      if (paymentTerm === 'cash') {
+        resolvedAmountPaid = totalCost;
+        paymentStatus = 'paid';
+      } else {
+        resolvedAmountPaid = amountPaid !== null && amountPaid !== undefined ? Math.min(parseFloat(amountPaid) || 0, totalCost) : 0;
+        if (resolvedAmountPaid >= totalCost) {
+          paymentStatus = 'paid';
+        } else if (resolvedAmountPaid > 0) {
+          paymentStatus = 'partially_paid';
+        } else {
+          paymentStatus = 'not_paid';
+        }
+      }
 
       // Create purchase record
       const [purchaseId] = await trx('purchases').insert({
@@ -27,8 +63,24 @@ class InventoryService {
         user_id: userId,
         purchase_date: purchaseDate,
         total_cost: totalCost,
-        notes
+        notes,
+        payment_term: paymentTerm,
+        due_date: resolvedDueDate,
+        payment_status: paymentStatus,
+        amount_paid: resolvedAmountPaid
       });
+
+      // Record initial payment ledger if amount paid > 0
+      if (resolvedAmountPaid > 0) {
+        await trx('purchase_payments').insert({
+          purchase_id: purchaseId,
+          user_id: userId,
+          payment_date: purchaseDate,
+          amount: resolvedAmountPaid,
+          payment_method: paymentTerm === 'cash' ? 'CASH' : 'BANK',
+          notes: paymentTerm === 'cash' ? 'Pembayaran Tunai Lunas (COD)' : 'Uang Muka / DP Pembelian Tempo'
+        });
+      }
 
       // Create inventory batches for each item
       const batches = [];

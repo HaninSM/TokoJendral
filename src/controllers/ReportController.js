@@ -49,6 +49,15 @@ const ReportController = {
     } catch (err) {
       next(err);
     }
+  },
+
+  async agedPayables(req, res, next) {
+    try {
+      const report = await ReportService.getAgedPayablesReport();
+      res.json({ success: true, data: report });
+    } catch (err) {
+      next(err);
+    }
   }
 };
 

@@ -54,6 +54,7 @@ const Sidebar = {
       ...common,
       { divider: true },
       { icon: '📥', label: 'Pembelian / Restock', page: 'purchases' },
+      { icon: '✂️', label: 'SPK Produksi / Jahit', page: 'productions' },
       { icon: '🏷️', label: 'Produk & Satuan', page: 'products' },
       { icon: '🤝', label: 'Supplier', page: 'suppliers' },
       { divider: true },

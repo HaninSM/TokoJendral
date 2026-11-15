@@ -14,6 +14,7 @@ const expenseRoutes = require('./src/routes/expenses');
 const settingsRoutes = require('./src/routes/settings');
 const itemRoutes = require('./src/routes/items');
 const developerRoutes = require('./src/routes/developer');
+const productionRoutes = require('./src/routes/productions');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,6 +39,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/developer', developerRoutes);
+app.use('/api/productions', productionRoutes);
 
 // SPA fallback — serve dashboard.html for non-API routes
 app.get('/dashboard', (req, res) => {

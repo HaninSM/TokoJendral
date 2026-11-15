@@ -26,6 +26,7 @@ const ReportsComponent = {
         <button class="tab" onclick="ReportsComponent.switchTab('sales', this)">Penjualan</button>
         <button class="tab" onclick="ReportsComponent.switchTab('byUser', this)">Per Kasir</button>
         <button class="tab" onclick="ReportsComponent.switchTab('fifo', this)">Stok FIFO</button>
+        <button class="tab" onclick="ReportsComponent.switchTab('agedPayables', this)">⏳ Aging Hutang (Net 30)</button>
       </div>
 
       <div id="reportContent"><p>Memuat laporan...</p></div>
@@ -55,6 +56,7 @@ const ReportsComponent = {
         case 'sales': await this.renderSales(startDate, endDate, container); break;
         case 'byUser': await this.renderByUser(startDate, endDate, container); break;
         case 'fifo': await this.renderFifo(container); break;
+        case 'agedPayables': await this.renderAgedPayables(container); break;
       }
     } catch (err) {
       container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
@@ -179,5 +181,103 @@ const ReportsComponent = {
     if (Object.keys(grouped).length === 0) {
       container.innerHTML = '<div class="empty-state"><div class="icon">📦</div><p>Belum ada data batch.</p></div>';
     }
+  },
+
+  async renderAgedPayables(container) {
+    const res = await API.get('/api/reports/aged-payables');
+    const data = res.data;
+    const { summary, suppliers } = data;
+
+    container.innerHTML = `
+      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <h4>${Format.currency(summary.totalCurrent)}</h4>
+            <p>Belum Jatuh Tempo</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">⚠️</div>
+          <div class="stat-info">
+            <h4>${Format.currency(summary.totalOverdue1to30)}</h4>
+            <p>Lewat 1 – 30 Hari</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🚨</div>
+          <div class="stat-info">
+            <h4>${Format.currency(summary.totalOverdue31to60)}</h4>
+            <p>Lewat 31 – 60 Hari</p>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">💥</div>
+          <div class="stat-info">
+            <h4>${Format.currency(summary.totalOverdue60Plus)}</h4>
+            <p>Lewat > 60 Hari</p>
+          </div>
+        </div>
+        <div class="stat-card" style="border: 2px solid #ef4444;">
+          <div class="stat-icon purple">💳</div>
+          <div class="stat-info">
+            <h4 style="color:#ef4444;">${Format.currency(summary.grandTotalDebt)}</h4>
+            <p>Total Hutang Supplier (AP)</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h3>Matriks Penuaan Hutang Dagang (Aged Payables Matrix)</h3>
+          <span class="badge badge-info">Per Tanggal: ${Format.date(data.asOfDate)}</span>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Supplier</th>
+                <th>Kontak</th>
+                <th>Belum Jatuh Tempo</th>
+                <th>1 - 30 Hari</th>
+                <th>31 - 60 Hari</th>
+                <th>> 60 Hari</th>
+                <th>Total Hutang</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${suppliers.length === 0 ? `
+                <tr>
+                  <td colspan="7" class="empty-state" style="text-align:center; padding:30px;">
+                    <div style="font-size:32px;">🎉</div>
+                    <p>Semua tagihan supplier lunas! Tidak ada kewajiban hutang yang tertunda.</p>
+                  </td>
+                </tr>` :
+                suppliers.map(s => `
+                  <tr style="font-weight: 500;">
+                    <td><strong>${s.supplierName}</strong></td>
+                    <td><small style="color:#64748b;">${s.contactPhone || '-'}</small></td>
+                    <td style="color:#10b981;">${Format.currency(s.current)}</td>
+                    <td style="color:${s.overdue1to30 > 0 ? '#f59e0b' : '#94a3b8'};">${Format.currency(s.overdue1to30)}</td>
+                    <td style="color:${s.overdue31to60 > 0 ? '#ef4444' : '#94a3b8'};">${Format.currency(s.overdue31to60)}</td>
+                    <td style="color:${s.overdue60Plus > 0 ? '#b91c1c' : '#94a3b8'}; font-weight:700;">${Format.currency(s.overdue60Plus)}</td>
+                    <td><strong style="color:#ef4444; font-size:14px;">${Format.currency(s.totalDebt)}</strong></td>
+                  </tr>
+                  ${s.bills.map(b => `
+                    <tr style="background:#f8fafc; font-size:12px; color:#475569;">
+                      <td style="padding-left:25px;" colspan="2">
+                        ↳ PO #${b.id} (${Format.date(b.purchaseDate)}) — Jatuh Tempo: <strong>${Format.date(b.dueDate)}</strong>
+                        ${b.daysOverdue > 0 ? `<span class="badge badge-danger" style="margin-left:5px;">Terlambat ${b.daysOverdue} Hari</span>` : '<span class="badge badge-success" style="margin-left:5px;">Belum Tempo</span>'}
+                      </td>
+                      <td colspan="4">Total: ${Format.currency(b.totalCost)} | Sudah Bayar: ${Format.currency(b.amountPaid)}</td>
+                      <td><strong>Sisa: ${Format.currency(b.remainingDebt)}</strong></td>
+                    </tr>
+                  `).join('')}
+                `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
   }
 };

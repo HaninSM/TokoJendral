@@ -12,5 +12,6 @@ router.get('/sales/detail', ReportController.detailedSalesReport);
 router.get('/sales/by-user', ReportController.salesByUser);
 router.get('/profit', ReportController.profitReport);
 router.get('/fifo', ReportController.fifoReport);
+router.get('/aged-payables', ReportController.agedPayables);
 
 module.exports = router;

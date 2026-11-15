@@ -24,7 +24,7 @@ class TransactionService {
    * @param {string} params.paymentMethod - CASH | TRANSFER | QRIS
    * @param {number} params.amountPaid - For CASH: amount tendered
    */
-  static async checkout({ userId, customerName, items, paymentMethod, amountPaid, transactionDate }) {
+  static async checkout({ userId, customerName, items, paymentMethod, amountPaid, payments, transactionDate }) {
     // Pre-validate all items exist and have stock
     const validatedItems = [];
     for (const item of items) {
@@ -57,23 +57,55 @@ class TransactionService {
 
     const totalAmount = validatedItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-    // Validate payment
-    let changeAmount = 0;
-    let paymentStatus = 'paid';
-
-    if (paymentMethod === 'CASH') {
-      if (!amountPaid || amountPaid < totalAmount) {
-        throw Object.assign(
-          new Error(`Pembayaran CASH kurang. Total: ${totalAmount}, Dibayar: ${amountPaid || 0}`),
-          { status: 400 }
-        );
-      }
-      changeAmount = amountPaid - totalAmount;
+    // Normalize payments array (Support single payment or split multi-payment)
+    let paymentLines = [];
+    if (payments && Array.isArray(payments) && payments.length > 0) {
+      paymentLines = payments.map(p => {
+        const method = (p.method || 'CASH').toUpperCase();
+        const amt = parseFloat(p.amount) || 0;
+        const tender = p.tenderedAmount !== undefined ? parseFloat(p.tenderedAmount) : amt;
+        const journalCode = method === 'QRIS' ? 'QRIS1' : (method === 'TRANSFER' ? 'BNK1' : 'CSH1');
+        return {
+          method,
+          journalCode,
+          amount: amt,
+          tenderedAmount: tender,
+          changeAmount: method === 'CASH' && tender > amt ? (tender - amt) : 0,
+          reference: p.reference || null
+        };
+      });
     } else {
-      // TRANSFER / QRIS: mark as pending until manually confirmed
-      paymentStatus = 'pending';
-      amountPaid = totalAmount;
+      // Backwards compatibility for single paymentMethod
+      const method = (paymentMethod || 'CASH').toUpperCase();
+      const tender = parseFloat(amountPaid) || totalAmount;
+      const journalCode = method === 'QRIS' ? 'QRIS1' : (method === 'TRANSFER' ? 'BNK1' : 'CSH1');
+      const change = method === 'CASH' && tender > totalAmount ? (tender - totalAmount) : 0;
+      paymentLines = [{
+        method,
+        journalCode,
+        amount: totalAmount,
+        tenderedAmount: tender,
+        changeAmount: change,
+        reference: null
+      }];
     }
+
+    // Validate total payments against totalAmount
+    const totalCovered = paymentLines.reduce((sum, p) => sum + p.amount, 0);
+    const totalTendered = paymentLines.reduce((sum, p) => sum + p.tenderedAmount, 0);
+    const overallChange = paymentLines.reduce((sum, p) => sum + p.changeAmount, 0);
+
+    if (totalCovered < totalAmount - 0.01) {
+      throw Object.assign(
+        new Error(`Pembayaran kurang! Total Tagihan: Rp ${totalAmount.toLocaleString('id-ID')}, Total Terbayar: Rp ${totalCovered.toLocaleString('id-ID')}`),
+        { status: 400 }
+      );
+    }
+
+    const isSplit = paymentLines.length > 1;
+    // For SQLite schema compatibility, store the primary method in transactions and flag is_split = true
+    const resolvedMethod = paymentLines[0].method;
+    const paymentStatus = 'paid';
 
     // Execute transactional checkout
     return db.transaction(async (trx) => {
@@ -83,15 +115,30 @@ class TransactionService {
         user_id: userId,
         customer_name: customerName || null,
         total_amount: totalAmount,
-        payment_method: paymentMethod,
+        payment_method: resolvedMethod,
         payment_status: paymentStatus,
-        amount_paid: amountPaid,
-        change_amount: changeAmount,
+        amount_paid: totalTendered,
+        change_amount: overallChange,
+        is_split: isSplit,
         transaction_date: transactionDate || nowIso,
         created_at: transactionDate || nowIso
       };
 
       const [transactionId] = await trx('transactions').insert(txHeader);
+
+      // Record detailed payment breakdown into transaction_payments
+      for (const p of paymentLines) {
+        await trx('transaction_payments').insert({
+          transaction_id: transactionId,
+          payment_method: p.method,
+          journal_code: p.journalCode,
+          amount: p.amount,
+          tendered_amount: p.tenderedAmount,
+          change_amount: p.changeAmount,
+          reference: p.reference,
+          created_at: transactionDate || nowIso
+        });
+      }
 
       // Process each item with FIFO deduction
       const transactionItems = [];
@@ -196,10 +243,12 @@ class TransactionService {
       return {
         transactionId,
         totalAmount,
-        paymentMethod,
+        paymentMethod: resolvedMethod,
+        isSplit,
         paymentStatus,
-        amountPaid,
-        changeAmount,
+        amountPaid: totalTendered,
+        changeAmount: overallChange,
+        payments: paymentLines,
         items: transactionItems
       };
     });

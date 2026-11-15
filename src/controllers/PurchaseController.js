@@ -38,7 +38,35 @@ const PurchaseController = {
     try {
       const purchase = await PurchaseModel.findById(req.params.id);
       if (!purchase) return res.status(404).json({ success: false, message: 'Pembelian tidak ditemukan.' });
-      res.json({ success: true, data: purchase });
+      const payments = await PurchaseModel.getPayments(req.params.id);
+      res.json({ success: true, data: { ...purchase, payments } });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async recordPayment(req, res, next) {
+    try {
+      const purchaseId = parseInt(req.params.id, 10);
+      const { paymentDate, amount, paymentMethod, notes } = req.body;
+      const result = await PurchaseModel.recordPayment({
+        purchaseId,
+        userId: req.user.id,
+        paymentDate,
+        amount,
+        paymentMethod,
+        notes
+      });
+      res.status(201).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async getPayments(req, res, next) {
+    try {
+      const payments = await PurchaseModel.getPayments(req.params.id);
+      res.json({ success: true, data: payments });
     } catch (err) {
       next(err);
     }

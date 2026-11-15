@@ -133,6 +133,117 @@ class ReportService {
     .groupBy('users.id', 'users.name', 'users.role')
     .orderBy('total_sales', 'desc');
   }
+
+  /**
+   * Generate Aged Payables Report (Laporan Penuaan Hutang Dagang Supplier)
+   * Groups unpaid/partially paid vendor bills by aging buckets:
+   * - Current (Belum Jatuh Tempo)
+   * - Overdue 1-30 Hari
+   * - Overdue 31-60 Hari
+   * - Overdue > 60 Hari
+   */
+  static async getAgedPayablesReport() {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const today = new Date(todayStr);
+
+    const unpaidPurchases = await db('purchases')
+      .join('suppliers', 'purchases.supplier_id', 'suppliers.id')
+      .whereIn('purchases.payment_status', ['not_paid', 'partially_paid'])
+      .select(
+        'purchases.*',
+        'suppliers.name as supplier_name',
+        'suppliers.phone as contact_phone',
+        'suppliers.address as supplier_address'
+      )
+      .orderBy('purchases.due_date', 'asc');
+
+    const supplierMap = {};
+    let totalCurrent = 0;
+    let totalOverdue1to30 = 0;
+    let totalOverdue31to60 = 0;
+    let totalOverdue60Plus = 0;
+    let grandTotalDebt = 0;
+
+    for (const p of unpaidPurchases) {
+      const totalCost = parseFloat(p.total_cost);
+      const amountPaid = parseFloat(p.amount_paid) || 0;
+      const remainingDebt = totalCost - amountPaid;
+
+      if (remainingDebt <= 0) continue;
+
+      const dueDate = new Date(p.due_date || p.purchase_date);
+      const diffTime = today.getTime() - dueDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      let current = 0;
+      let overdue1to30 = 0;
+      let overdue31to60 = 0;
+      let overdue60Plus = 0;
+
+      if (diffDays <= 0) {
+        current = remainingDebt;
+        totalCurrent += remainingDebt;
+      } else if (diffDays <= 30) {
+        overdue1to30 = remainingDebt;
+        totalOverdue1to30 += remainingDebt;
+      } else if (diffDays <= 60) {
+        overdue31to60 = remainingDebt;
+        totalOverdue31to60 += remainingDebt;
+      } else {
+        overdue60Plus = remainingDebt;
+        totalOverdue60Plus += remainingDebt;
+      }
+
+      grandTotalDebt += remainingDebt;
+
+      const supId = p.supplier_id;
+      if (!supplierMap[supId]) {
+        supplierMap[supId] = {
+          supplierId: supId,
+          supplierName: p.supplier_name,
+          contactPhone: p.contact_phone,
+          current: 0,
+          overdue1to30: 0,
+          overdue31to60: 0,
+          overdue60Plus: 0,
+          totalDebt: 0,
+          bills: []
+        };
+      }
+
+      supplierMap[supId].current += current;
+      supplierMap[supId].overdue1to30 += overdue1to30;
+      supplierMap[supId].overdue31to60 += overdue31to60;
+      supplierMap[supId].overdue60Plus += overdue60Plus;
+      supplierMap[supId].totalDebt += remainingDebt;
+
+      supplierMap[supId].bills.push({
+        id: p.id,
+        purchaseDate: p.purchase_date,
+        dueDate: p.due_date,
+        paymentTerm: p.payment_term,
+        paymentStatus: p.payment_status,
+        totalCost,
+        amountPaid,
+        remainingDebt,
+        daysOverdue: diffDays > 0 ? diffDays : 0,
+        notes: p.notes
+      });
+    }
+
+    return {
+      asOfDate: todayStr,
+      summary: {
+        totalCurrent,
+        totalOverdue1to30,
+        totalOverdue31to60,
+        totalOverdue60Plus,
+        grandTotalDebt,
+        totalUnpaidInvoices: unpaidPurchases.length
+      },
+      suppliers: Object.values(supplierMap)
+    };
+  }
 }
 
 module.exports = ReportService;

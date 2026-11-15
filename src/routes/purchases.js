@@ -10,5 +10,7 @@ router.use(authenticate, authorize('owner'));
 router.get('/', PurchaseController.list);
 router.get('/:id', PurchaseController.getById);
 router.post('/', PurchaseController.validation, handleValidationErrors, PurchaseController.create);
+router.post('/:id/payments', PurchaseController.recordPayment);
+router.get('/:id/payments', PurchaseController.getPayments);
 
 module.exports = router;

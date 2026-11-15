@@ -1,5 +1,5 @@
 # 📄 PRODUCT REQUIREMENTS DOCUMENT (PRD)
-# Sistem POS & Manajemen Inventori Multi-Role
+# Sistem POS & Manajemen Inventori Enterprise Multi-Role
 
 ---
 
@@ -7,10 +7,10 @@
 
 | Atribut | Detail |
 | :--- | :--- |
-| **Nama Proyek** | Multi-Role POS & Inventory System with FIFO & Multi-Unit Conversion |
+| **Nama Proyek** | Multi-Role POS & Inventory System with FIFO, Dual-Mode Stock, Make-to-Stock Production, AP Aging & Split Payment |
 | **Status Dokumen** | **APPROVED & IMPLEMENTED** |
-| **Versi Terkini** | **v1.5.0** |
-| **Tanggal Rilis Terkini** | 28 September 2026 |
+| **Versi Terkini** | **v1.7.0** |
+| **Tanggal Rilis Terkini** | 15 November 2026 |
 | **Arsitektur** | Spec-Driven Development (SDD) & MVC Module Architecture |
 | **Stack Teknologi** | Node.js, Express.js, Knex.js, SQLite (better-sqlite3), Vanilla JS SPA, Modern CSS3 SaaS Theme |
 
@@ -25,32 +25,50 @@
 | **v1.2.0** | 27 Sep 2026 | *Superseded* | Data Migration & Backdate POS: Input tanggal backdate di POS Kasir, normalisasi boundary tanggal laporan, reset bersih baris varian, sinkronisasi dinamis label kebutuhan stok. |
 | **v1.3.0** | 28 Sep 2026 | *Superseded* | Otomatisasi Harga Jual Berbasis Margin pada Pembelian (Inbound Margin Sync) dengan jaminan integritas data transaksi penjualan historis tidak terpengaruh (frozen snapshot). |
 | **v1.4.0** | 28 Sep 2026 | *Superseded* | Role Khusus "Developer" & Modul Pembersihan Data Terfilter: Penambahan peran Developer dengan tampilan antarmuka terisolasi (hanya 1 menu khusus), formulir penghapusan fleksibel (wipe all data atau seleksi form/modul tertentu dengan rentang tanggal), proteksi akun sistem, serta kontrol akses ketat (RBAC). |
-| **v1.5.0** | 28 Sep 2026 | **Current** | **Peremajaan Antarmuka Menyeluruh (Invo. Modern SaaS UI Theme Overhaul) & Visual User Guide:** Transformasi desain visual sistem mengikuti desain referensi Invo. dengan palet Electric Blue (`#1a62ff`), desktop window wrapper beraksen 3-dots Mac, logo geometris 3D cube, navigasi kapsul pil menyala dengan nama menu orisinal yang dipertahankan, 4 stat cards berikon pastel & badge tren, widget grafik batang vertikal pendapatan bulanan, kartu aksi promosi, serta dokumentasi visual buku panduan yang dilengkapi tangkapan layar (*screenshots*) pada setiap modul dan formulir. |
+| **v1.5.0** | 28 Sep 2026 | *Superseded* | Peremajaan Antarmuka Menyeluruh (Invo. Modern SaaS UI Theme Overhaul) & Visual User Guide: Transformasi desain visual sistem mengikuti desain referensi Invo. dengan palet Electric Blue (`#1a62ff`), desktop window wrapper beraksen 3-dots Mac, logo geometris 3D cube, navigasi kapsul pil menyala, 4 stat cards berikon pastel & badge tren, widget grafik batang vertikal pendapatan bulanan, kartu aksi promosi, serta dokumentasi visual buku panduan yang dilengkapi tangkapan layar (*screenshots*). |
+| **v1.6.0** | 30 Sep 2026 | *Superseded* | Dual-Mode Pengelolaan Stok (Physical Allocation vs Floating Pool) & Composite Bundling / Hampers Buah (Model B - On-Demand JIT): Dukungan penuh fleksibilitas stok di pasar nyata. Mode *Floating Pool* untuk konversi bebas otomatis (telur, kain), mode *Physical Allocation (Repackage)* dengan kalkulator kuota real-time dan validasi anti over-allocation, perakitan paket hampers multi-item berbasis resep (*Bill of Materials*) dengan kapasitas bottleneck otomatis, serta pemotongan multi-komponen FIFO atomic saat checkout kasir. |
+| **v1.7.0** | 15 Nov 2026 | **Current** | **Make-to-Stock Konveksi (SPK Jahit), Manajemen Hutang Supplier (Aged Payables Net 30), Split Multi-Payment Kasir & Dokumentasi Diagram Alur Bisnis Terintegrasi:**<br>• **Modul Produksi Konveksi (SPK Jahit):** Konversi bahan mentah/kain menjadi barang jadi siap jual dengan kalkulasi HPP Komposit (bahan baku FIFO + ongkos jahit + aksesoris) dan penerbitan batch barang jadi baru otomatis.<br>• **Modul Hutang Usaha & Termin Pembayaran:** Dukungan pembelian kredit (Cash, Net 15, Net 30, Net 60, Custom), jatuh tempo, pencatatan pembayaran cicilan (`purchase_payments`), dan Laporan Analisis Umur Hutang (*Aged Payables Report*).<br>• **Modul Split Multi-Payment Kasir:** Pembayaran ganda kasir (CASH + TRANSFER/QRIS) dengan pencatatan kode jurnal multi-kanal (`CSH1`, `BNK1`, `QRIS1`).<br>• **Diagram Alur Bisnis Mermaid Lengkap:** Menyematkan diagram alur rantai pasok, dual-mode stok, bundling hampers, SPK konveksi, kasir split-payment, dan skema database ERD mutakhir. |
 
 ---
 
 ## 🏷️ Legenda Penanda Perubahan (Change Highlighting Legend)
 
-* 🟢 `<span class="badge-add">[TAMBAH v1.5]</span>` : Fitur, komponen UI, atau token desain baru pada v1.5.0 (Invo. Design System).
-* 🟡 `<span class="badge-mod">[UBAH v1.5]</span>` : Modifikasi layout, skema styling, atau struktur dashboard pada v1.5.0.
-* 🟢 `<span class="badge-add">[TAMBAH v1.4]</span>` : Fitur yang ditambahkan pada rilis v1.4.0 (Role Developer & Cleanup Panel).
-* 🟢 `<span class="badge-add">[TAMBAH v1.3]</span>` : Fitur yang ditambahkan pada rilis v1.3.0 (Inbound Margin Auto-Sync).
-* 🟢 `<span class="badge-add">[TAMBAH v1.2]</span>` : Fitur yang ditambahkan pada rilis v1.2.0 (Backdate POS & Reset Form).
-* 🟢 `<span class="badge-add">[TAMBAH v1.1]</span>` : Fitur yang ditambahkan pada rilis v1.1.0 (Master Item & Multi-Unit).
-* 🔴 `<span class="badge-del">[HAPUS / DEPRECATED]</span>` : Alur lama yang dihapus/ditinggalkan demi integritas data & efisiensi.
+* 🟢 `<span class="badge-add">[TAMBAH v1.7]</span>` : Fitur baru pada v1.7.0 (SPK Jahit Konveksi, Hutang Net 30, Split Multi-Payment Kasir, Diagram Mermaid Bisnis).
+* 🟢 `<span class="badge-add">[TAMBAH v1.6]</span>` : Fitur pada v1.6.0 (Dual-Mode Stok & Composite Bundling).
+* 🟢 `<span class="badge-add">[TAMBAH v1.5]</span>` : Fitur antarmuka pada v1.5.0 (Invo. Design System).
+* 🟢 `<span class="badge-add">[TAMBAH v1.4]</span>` : Fitur peran Developer & Data Cleanup pada v1.4.0.
+* 🟢 `<span class="badge-add">[TAMBAH v1.3]</span>` : Inbound Margin Auto-Sync pada v1.3.0.
+* 🟢 `<span class="badge-add">[TAMBAH v1.2]</span>` : Backdate POS & Reset Form pada v1.2.0.
+* 🟢 `<span class="badge-add">[TAMBAH v1.1]</span>` : Master Item & Multi-Unit pada v1.1.0.
 
 ---
 
 ## 1. EXECUTIVE SUMMARY & BUSINESS CONTEXT
 
-Sistem Point of Sale (POS) dan manajemen inventori konveksi/tekstil/eceran yang mendukung multi-role (*Owner*, *Kasir*, *Reseller*, *Developer*) dengan kemampuan:
-1. **Konversi Satuan Bertingkat (Bulk-to-Retail):** Inbound dalam satuan besar grosir (Roll, Kodi, Bal) yang dikonversi ke **Satuan Dasar** penyimpanan stok (Meter, Yard, Pcs).
+Sistem Point of Sale (POS) dan manajemen inventori konveksi/tekstil/retail/eceran yang mendukung multi-role (*Owner*, *Kasir*, *Reseller*, *Developer*) dengan kemampuan:
+1. **Konversi Satuan Bertingkat (Bulk-to-Retail):** Inbound dalam satuan besar grosir (Roll, Kodi, Dus, Bal) yang dikonversi ke **Satuan Dasar** penyimpanan stok (Meter, Yard, PCS, Kg).
 2. **Pelacakan Stok FIFO Berbasis Satuan Dasar:** Pengeluaran stok memotong batch tertua (*First In, First Out*) untuk memastikan HPP akurat dan mencegah distorsi valuasi.
-3. **Hierarki Master Item & Varian Satuan Jual:** Satu barang induk master dapat memiliki banyak satuan pecahan eceran (contoh: Barang `XXX` dipecah menjadi `Sprei M`, `Sprei L`, `Sprei XL`) yang dikonfigurasi dalam **satu kali setup (*single flow*)**.
-4. 🟢 `[TAMBAH v1.2]` **Kesiapan Migrasi Data Historis (Backdate Transaction):** Memfasilitasi proses *go-live* dan migrasi data transaksi lampau toko melalui input tanggal transaksi (*backdate*) di POS Kasir dengan akurasi pencatatan laporan keuangan sesuai tanggal historis.
-5. 🟢 `[TAMBAH v1.3]` **Otomatisasi Penetapan Harga Jual Berbasis Margin (% Margin Sync):** Ketika barang di-setup dengan metode persentase profit sebelum ada riwayat pembelian (harga jual awal Rp 0), pencatatan restock pembelian perdana maupun selanjutnya otomatis menghitung HPP tertimbang dan memperbarui harga jual di menu Produk & Satuan, tanpa mengubah sedikit pun nota transaksi penjualan lampau.
-6. 🟢 `[TAMBAH v1.4]` **Manajemen Pemeliharaan & Reset Data Khusus (Role Developer):** Menyediakan akun khusus peran *Developer* yang terisolasi hanya dapat mengakses 1 menu *Maintenance*, untuk membersihkan data uji coba atau menghapus data spesifik per form/modul dalam rentang tanggal tertentu secara aman.
-7. **Laporan Keuangan Otomatis:** Perhitungan *Gross Profit* (Omzet - HPP FIFO) dan *Net Profit* (Laba Kotor - Pengeluaran Operasional).
+3. **Hierarki Master Item & Varian Satuan Jual:** Satu barang induk master dapat memiliki banyak satuan pecahan eceran (contoh: Barang `XXX` dipecah menjadi `Sprei M`, `Sprei L`, `Sprei XL` atau `Kacamata` menjadi `PCS`, `Lusin`, `Box`).
+4. **Dual-Mode Pengelolaan Stok Siap Jual (Floating Pool vs Physical Allocation):**
+   - *Floating Pool (Default):* Tumpukan stok bebas di gudang, kapasitas terkonversi otomatis ke semua satuan tanpa mengunci stok fisik (ideal untuk barang curah/segar).
+   - *Physical Allocation (Repackage):* Alokasi kuota fisik siap jual per kemasan dengan proteksi anti over-allocation, tombol alokasi cepat ke eceran, dan tombol reset ke floating pool kapan saja.
+5. **Composite Bundling / Paket Hampers (Model B - On-Demand JIT):**
+   - Pembuatan paket parcel multi-item (misal: 1.5kg Mangga + 1.0kg Apel + 0.5kg Anggur + 1 Keranjang).
+   - Penentuan stok siap rakit berbasis kapasitas bahan terkecil (*Bottleneck*).
+   - Pemotongan stok multi-komponen secara atomic via FIFO saat checkout kasir, merekam HPP komposit akurat di Laporan Laba Rugi.
+6. 🟢 `[TAMBAH v1.7]` **Manajemen SPK Produksi Konveksi (Make-to-Stock):**
+   - Penerbitan Surat Perintah Kerja (SPK) untuk memproses bahan baku kain menjadi produk jadi.
+   - Perhitungan **HPP Komposit**: memadukan biaya bahan baku FIFO aktual dengan ongkos jahit mitra (*labor cost*) dan aksesoris (*accessory cost*).
+   - Pemotongan bahan baku dan penerbitan batch persediaan barang jadi baru secara otomatis.
+7. 🟢 `[TAMBAH v1.7]` **Manajemen Hutang Dagang Supplier (AP Aged Payables Net 30):**
+   - Pembelian restock dengan termin pembayaran kredit (*Cash*, *Net 15*, *Net 30*, *Net 60*, *Custom*).
+   - Pelacakan tanggal jatuh tempo (*due date*), status pembayaran (*paid*, *partially_paid*, *not_paid*), dan pencatatan riwayat cicilan (`purchase_payments`).
+   - Laporan Analisis Umur Hutang Supplier (*Aged Payables Report*).
+8. 🟢 `[TAMBAH v1.7]` **Split Multi-Payment Kasir & Pelacakan Multi-Jurnal:**
+   - Transaksi kasir dapat dibayar dengan kombinasi berbagai kanal (misal: tunai + transfer bank/QRIS).
+   - Integrasi kode akun jurnal (`CSH1`, `BNK1`, `QRIS1`) untuk rekonsiliasi kas dan mutasi bank.
+9. **Kesiapan Migrasi Data Historis (Backdate Transaction):** Input transaksi tanggal lampau (*backdate*) di kasir untuk mempermudah migrasi data nota fisik lama.
+10. **Laporan Keuangan Otomatis:** Perhitungan *Gross Profit* (Omzet - HPP FIFO) dan *Net Profit* (Laba Kotor - Pengeluaran Operasional).
 
 ---
 
@@ -58,171 +76,249 @@ Sistem Point of Sale (POS) dan manajemen inventori konveksi/tekstil/eceran yang 
 
 | Role | Tanggung Jawab Utama | Hak Akses |
 | :--- | :--- | :--- |
-| **Owner (Admin)** | Pemilik toko. Mengatur master barang, supplier, pembelian restock, penetapan harga multi-satuan, migrasi data, keuangan, dan manajemen user. | Akses Penuh (Full Access) ke seluruh modul operasional, inventori, laporan, dan pengaturan. |
-| **Kasir** | Melayani transaksi penjualan offline/di toko secara langsung, termasuk input transaksi backdate jika didelegasikan saat migrasi data. | POS Kasir, input jumlah barang, input tanggal transaksi, penerimaan pembayaran (CASH/TRANSFER/QRIS), riwayat transaksi pribadi. |
+| **Owner (Admin)** | Pemilik toko. Mengatur master barang, supplier, pembelian restock (tunai/kredit), pembayaran hutang dagang, SPK produksi konveksi, alokasi stok (repackage), paket hampers (bundling), keuangan, dan manajemen user. | Akses Penuh (Full Access) ke seluruh modul operasional, inventori, produksi, laporan, dan pengaturan. |
+| **Kasir** | Melayani transaksi penjualan offline/di toko secara langsung, termasuk pembayaran tunggal atau split multi-payment dan input transaksi backdate. | POS Kasir, input jumlah barang, input tanggal transaksi, penerimaan pembayaran multi-kanal, riwayat transaksi pribadi. |
 | **Reseller** | Tenaga pemasar / agen luar. | POS Penjualan dengan **katalog produk terfilter** (`reseller_visible = true`), riwayat penjualan pribadi. |
-| 🟢 `[TAMBAH v1.4]` **Developer** | Teknisi / pengembang sistem. Melakukan pemeliharaan, reset data pengujian, atau pembersihan data transaksional lampau. | **Hanya 1 Menu Khusus:** *Developer Maintenance & Data Cleanup*. Seluruh menu kasir, pembelian, inventori, dan laporan disembunyikan. Akses eksklusif ke API pembersihan data. |
+| **Developer** | Teknisi / pengembang sistem. Melakukan pemeliharaan, reset data pengujian, atau pembersihan data transaksional lampau. | **Hanya 1 Menu Khusus:** *Developer Maintenance & Data Cleanup*. Seluruh menu kasir, pembelian, inventori, produksi, dan laporan disembunyikan. Akses eksklusif ke API pembersihan data. |
 
 ---
 
-## 3. SPESIFIKASI PROSES BISNIS & PERUBAHAN SISTEM
+## 3. SPESIFIKASI PROSES BISNIS & DIAGRAM ALUR (MERMAID BUSINESS FLOW)
 
-### 3.1 Alur Rantai Pasok (Supply Chain Flow)
+### 3.1 Alur Rantai Pasok Hulu ke Hilir Terintegrasi (Enterprise Supply Chain Flow)
 
+```mermaid
+flowchart TD
+    SUP["🤝 Supplier Bahan Baku / Grosir"] -->|"1. Kirim Barang & Terbitkan Faktur"| BUY["📥 Pembelian / Restock (Purchases)"]
+
+    subgraph AP_SUB["Manajemen Termin Pembayaran & Hutang Supplier (AP Aging)"]
+        BUY --> AP_CHECK{"Metode Pembayaran?"}
+        AP_CHECK -->|"Tunai (CASH)"| AP_PAID["Status: Lunas (Paid)"]
+        AP_CHECK -->|"Kredit (Net 15 / Net 30 / Net 60)"| AP_DEBT["Catat Hutang Dagang & Tanggal Jatuh Tempo (Due Date)"]
+        AP_DEBT --> AP_AGING["Laporan Aging Hutang (0-30, 31-60, 61-90, >90 Hari)"]
+        AP_AGING --> AP_PAYMENT["💳 Pembayaran Cicilan Hutang (tabel 'purchase_payments')"]
+        AP_PAYMENT -->|"Lunas Penuh"| AP_PAID
+    end
+
+    subgraph INBOUND_FIFO["Penerimaan & Lapisan Batch Inventori FIFO"]
+        BUY -->|"2. Hitung: Qty Grosir x Konversi"| CALC_BASE["Satuan Dasar Penyimpanan (Meter, PCS, Kg)"]
+        CALC_BASE --> RAW_BATCHES["📦 Inventory Batches Bahan Baku (Lapisan FIFO)"]
+        RAW_BATCHES --> CALC_HPP["Hitung Rata-Rata HPP Dasar per Batch"]
+    end
+
+    subgraph PRODUCTION_AND_MODELS["Pengolahan Nilai Tambah & Model Stok (v1.7.0)"]
+        RAW_BATCHES --> PATH_CHOICE{"Pilihan Pemanfaatan Stok"}
+        
+        PATH_CHOICE -->|"Opsi 1: Produksi Make-to-Stock"| SPK_PROD["✂️ SPK Jahit Konveksi (tabel 'productions')"]
+        SPK_PROD -->|"Potong Bahan FIFO + Ongkos Jahit + Aksesoris"| PROD_BATCH["📦 Batch Baru Produk Jadi (HPP Komposit)"]
+        
+        PATH_CHOICE -->|"Opsi 2: Stok Bebas Langsung"| FLOAT_POOL["🌊 Floating Pool (Konversi Otomatis On-Demand)"]
+        
+        PATH_CHOICE -->|"Opsi 3: Kemasan Fisik"| REPACK_ALLOC["📦 Physical Allocation (Repackage Kuota Display)"]
+        
+        PATH_CHOICE -->|"Opsi 4: Resep Hadiah / Parcel"| BUNDLE_HAMPERS["🧺 Composite Bundling (Hampers Buah JIT)"]
+    end
+
+    subgraph POS_CHECKOUT["Penjualan POS Kasir & Multi-Payment"]
+        PROD_BATCH & FLOAT_POOL & REPACK_ALLOC & BUNDLE_HAMPERS --> POS_CART["🛒 POS Kasir (Keranjang Belanja)"]
+        POS_CART --> BACKDATE_VAL["Validasi Tanggal: Real-Time vs Backdate (Historis)"]
+        BACKDATE_VAL --> SPLIT_PAY{"Pilihan Pembayaran Kasir"}
+        SPLIT_PAY -->|"Single Method"| PAY_SINGLE["CASH / TRANSFER / QRIS"]
+        SPLIT_PAY -->|"Split Multi-Payment"| PAY_MULTI["Kombinasi Kas + Transfer Bank / QRIS"]
+        PAY_MULTI & PAY_SINGLE --> ATOMIC_DEDUCT["Eksekusi Checkout Atomic:<br>• Deduct FIFO Batch Terlama<br>• Snapshot HPP & Harga Jual Terkunci<br>• Catat Jurnal Pembayaran (CSH1, BNK1, QRIS1)"]
+    end
+
+    subgraph FIN_RECON["Laporan Finansial & Rekonsiliasi"]
+        ATOMIC_DEDUCT --> P_L_REPORT["📊 Laporan Laba Rugi (P&L):<br>• Omzet Bersih<br>• HPP FIFO Terpotong<br>• Beban Operasional<br>• Laba Kotor & Laba Bersih"]
+        ATOMIC_DEDUCT --> CASH_RECON["🏦 Rekonsiliasi Kas Toko & Mutasi Bank"]
+    end
 ```
-[Supplier] ➔ [Pembelian / Restock] ➔ [Master Item & Multi-Satuan] ➔ [POS Kasir (Real-time / Backdate)] ➔ [Laporan Keuangan]
+
+---
+
+### 3.2 Alur Bisnis Dual-Mode Stok: Floating Pool vs Physical Allocation & Logika Switching
+
+```mermaid
+flowchart TD
+    TOTAL_WH["📦 Total Stok Fisik di Gudang (Contoh: 449 PCS Kacamata)"] --> PILIH_MODE{"Pilih Mode Pengelolaan Stok"}
+
+    subgraph FLOATING_POOL_FLOW["🌊 Mode Floating Pool (Default / Fleksibel)"]
+        PILIH_MODE -->|"Karakteristik: Barang curah, telur, buah segar, kain meteran"| FL_FREE["Stok Bebas Tanpa Pengikatan Kuota di Awal"]
+        FL_FREE --> FL_CALC["Perhitungan Kapasitas Siap Jual Otomatis di Kasir:"]
+        FL_CALC --> V_PCS["PCS: 449 / 1 = 449 PCS"]
+        FL_CALC --> V_LUSIN["Lusin: floor(449 / 12) = 37 Lusin"]
+        FL_CALC --> V_BOX["Box: floor(449 / 50) = 8 Box"]
+        V_LUSIN -->|"Pelanggan Beli 1 Lusin (12 PCS)"| SALE_FL["Kasir Ambil 12 PCS dari Tumpukan Gudang"]
+        SALE_FL -->|"Sisa Gudang: 437 PCS"| RECALC_FL["Otomatis Ter-update: 437 PCS, 36 Lusin, 8 Box"]
+    end
+
+    subgraph SWITCH_TO_ALLOC["🔄 Pemicu Switching: Floating Pool ke Physical Allocation"]
+        FL_FREE -.->|"1. Barang Mendekati Expired (Kemas Paket Sembako Murah)<br>2. Perang Harga Pasar (Amankan Margin dengan Paket Grosir)<br>3. Kesiapan Display Jam Sibuk (Packing di Pagi Hari)"| ACTION_REPACK["Buka Menu Produk ➔ Klik Repackage / Alokasi Stok"]
+    end
+
+    subgraph ALLOC_FLOW["📦 Mode Physical Allocation (Repackage)"]
+        ACTION_REPACK --> INPUT_QUOTA["Owner Membagi Kuota Fisik Kemasan:<br>• 5 Box (250 PCS)<br>• 15 Lusin (180 PCS)<br>• 19 PCS Eceran (19 PCS)"]
+        INPUT_QUOTA --> VALIDATION{"Validasi Matematis:<br>Total Alokasi <= Stok Fisik Gudang?"}
+        VALIDATION -->|"Total 449 <= 449 (VALID)"| SAVE_QUOTA["💾 Simpan Kuota Fisik (stock_mode = 'allocated')"]
+        VALIDATION -->|"Total > 449 (OVER-ALLOCATION)"| BLOCK_QUOTA["❌ Tombol Simpan Terkunci & Muncul Peringatan Merah"]
+        SAVE_QUOTA --> POS_ALLOC_RESTRICT["Kasir Hanya Menjual Sesuai Kuota Kemasan Fisik di Rak Display"]
+        POS_ALLOC_RESTRICT -->|"Pembeli Minta 25 PCS Eceran"| REJECT_OVER["Kasir Hanya Bisa Jual 19 PCS (Kemasan Lusin Tidak Boleh Dipecah)"]
+    end
+
+    subgraph SWITCH_TO_FLOAT["🔄 Pemicu Switching: Physical Allocation ke Floating Pool"]
+        POS_ALLOC_RESTRICT -.->|"1. Periode Promo Berakhir<br>2. Peminat Grosir Sepi tapi Pembeli Eceran Melonjak"| ACTION_RESET["Klik Tombol Merah: Reset ke Floating Pool"]
+        ACTION_RESET --> FL_FREE
+    end
 ```
 
-#### Alur Hulu ke Hilir Terkini (v1.2.0):
-1. **Master Item & Satuan Dasar:** Barang master terdaftar di tabel `items` dengan **Satuan Dasar Matematis** (contoh: `Meter`, `Pcs`, `Kg`).
-2. **Inbound Restock (Bisa Backdate):** Pembelian dicatat dengan tanggal penerimaan fisik barang (`purchase_date`). Batch stok FIFO mencatat tanggal masuk tersebut.
-3. 🟡 `[UBAH v1.2]` **Setup Satuan Jual Dinamis:** 
-   - Dilakukan serentak dalam satu formulir Master-Detail.
-   - Daftar baris satuan jual **selalu di-reset bersih** setiap kali setup dibuka.
-   - Kolom kebutuhan bahan selalu **tersinkronisasi secara dinamis** dengan isi textbox *Satuan Dasar Perhitungan Stok*.
-4. 🟢 `[TAMBAH v1.2]` **Penjualan Kasir Fleksibel (Current & Backdate):**
-   - Transaksi kasir dapat dicatat secara *real-time* ataupun *backdate* (mundur tanggal) saat migrasi data historis toko.
-   - Pemotongan FIFO tetap memprioritaskan batch tertua yang tersedia.
+---
+
+### 3.3 Alur Bisnis Composite Bundling / Hampers Buah (Model B - On-Demand JIT)
+
+```mermaid
+flowchart TD
+    subgraph INVENTORI_BAHAN["1. Bahan Baku Independen di Gudang (Floating Pool)"]
+        B1["🥭 Mangga: 30 Kg (HPP: Rp 20.000/Kg)"]
+        B2["🍎 Apel: 12 Kg (HPP: Rp 35.000/Kg)"]
+        B3["🍇 Anggur: 10 Kg (HPP: Rp 60.000/Kg)"]
+        B4["🧺 Keranjang Parcel: 25 Pcs (HPP: Rp 15.000/Pcs)"]
+    end
+
+    subgraph DEFINISI_RESEP["2. Formulir Resep (Bill of Materials / BOM)"]
+        BOM["Paket Hampers Buah Segar Premium<br>Harga Jual: Rp 150.000"]
+        BOM --> R1["Kebutuhan: 1.5 Kg Mangga"]
+        BOM --> R2["Kebutuhan: 1.0 Kg Apel"]
+        BOM --> R3["Kebutuhan: 0.5 Kg Anggur"]
+        BOM --> R4["Kebutuhan: 1.0 Pcs Keranjang"]
+    end
+
+    subgraph DYNAMIC_ENGINE["3. Deteksi Bottleneck & Perhitungan HPP Komposit (JIT)"]
+        R1 & B1 --> K1["Kapasitas Mangga = floor(30 / 1.5) = 20 Paket"]
+        R2 & B2 --> K2["Kapasitas Apel = floor(12 / 1.0) = 12 Paket (BOTTLENECK)"]
+        R3 & B3 --> K3["Kapasitas Anggur = floor(10 / 0.5) = 20 Paket"]
+        R4 & B4 --> K4["Kapasitas Keranjang = floor(25 / 1.0) = 25 Paket"]
+        
+        K1 & K2 & K3 & K4 --> DETECT_BOTTLENECK["Stok Siap Rakit: MIN(20, 12, 20, 25) = 12 Paket"]
+        
+        R1 --> H1["Biaya Mangga = 1.5 x Rp 20.000 = Rp 30.000"]
+        R2 --> H2["Biaya Apel = 1.0 x Rp 35.000 = Rp 35.000"]
+        R3 --> H3["Biaya Anggur = 0.5 x Rp 60.000 = Rp 30.000"]
+        R4 --> H4["Biaya Keranjang = 1.0 x Rp 15.000 = Rp 15.000"]
+        H1 & H2 & H3 & H4 --> CALC_HPP["Total HPP Paket = Rp 110.000"]
+        CALC_HPP --> CALC_PROFIT["Estimasi Profit = Rp 150.000 - Rp 110.000 = Rp 40.000 (+36.4%)"]
+    end
+
+    subgraph CHECKOUT_TRANSACTION["4. Transaksi Kasir POS & Pemotongan Multi-FIFO Atomic"]
+        DETECT_BOTTLENECK --> SALE_ACTION["Pelanggan Beli 1 Paket Hampers di Kasir"]
+        SALE_ACTION --> ATOMIC_DEDUCT["Database Transaction (Knex.js Atomic):<br>1. Potong 1.5 Kg Mangga dari Batch Terlama (FIFO)<br>2. Potong 1.0 Kg Apel dari Batch Terlama (FIFO)<br>3. Potong 0.5 Kg Anggur dari Batch Terlama (FIFO)<br>4. Potong 1.0 Pcs Keranjang dari Batch Terlama (FIFO)<br>5. Catat 1 Baris Penjualan dengan HPP Aktual Rp 110.000"]
+        ATOMIC_DEDUCT --> FIN_SYNC["Laporan Keuangan Terupdate Otomatis:<br>• Omzet Bertambah Rp 150.000<br>• COGS Bertambah Rp 110.000<br>• Laba Kotor Bersih Rp 40.000"]
+    end
+```
 
 ---
 
-### 3.2 Skenario Tantangan Riil (Challenge Case: Barang "XXX")
+### 3.4 Alur Produksi Konveksi: SPK Jahit & Kalkulasi HPP Komposit (Make-to-Stock)
 
-> **Studi Kasus:**
-> Sebuah barang dengan nama **"XXX"** dibeli dalam satuan grosir **Kodi** (seharga Rp 1.200.000, di mana 1 Kodi = 60 Meter).
-> Toko menjualnya dalam 3 ukuran eceran:
-> 1. **Sprei M:** Butuh bahan `2.0 Meter` | Metode: `Manual Rp 60.000`
-> 2. **Sprei L:** Butuh bahan `2.5 Meter` | Metode: `% Margin 40%` ➔ Terhitung Rp 70.000
-> 3. **Sprei XL:** Butuh bahan `3.0 Meter` | Metode: `% Margin 50%` ➔ Terhitung Rp 90.000
+```mermaid
+flowchart TD
+    RAW_INPUT["Pilih Bahan Baku Kain Mentah (Misal: Kain Katun Rayon)"] --> SELECT_PRODUCT["Pilih Varian Produk Jadi (Misal: Sprei Ukuran L)"]
+    SELECT_PRODUCT --> INPUT_QTY["Input Jumlah Jadi: 20 Pcs Sprei L (Konversi: 2.5 Meter/Pcs)"]
+    
+    subgraph FIFO_ESTIMATE["Kalkulasi Kebutuhan & Biaya Bahan Baku FIFO"]
+        INPUT_QTY --> CALC_METERS["Kebutuhan Bahan = 20 x 2.5 = 50 Meter"]
+        CALC_METERS --> FIFO_CHECK{"Cek Ketersediaan Stok Batch FIFO Aktif"}
+        FIFO_CHECK -->|"Tersedia 60 Meter @ Rp 20.000"| RAW_COST["Biaya Bahan Mentah = 50 x Rp 20.000 = Rp 1.000.000"]
+        FIFO_CHECK -->|"Kurang dari 50 Meter"| STOP_PROD["❌ Tolak SPK: Bahan Baku Tidak Cukup"]
+    end
 
-#### Kalkulasi Matematis Sistem:
-$$\text{HPP Dasar per Meter} = \frac{\text{Total Biaya Beli}}{\text{Total Meter Didapat}} = \frac{\text{Rp } 1.200.000}{60\text{ Meter}} = \mathbf{\text{Rp } 20.000/\text{Meter}}$$
+    subgraph COMPOSITE_COSTING["Kalkulasi Biaya Konveksi Tambahan"]
+        RAW_COST --> INPUT_LABOR["Input Ongkos Jahit per Pcs: Rp 15.000 (Total Rp 300.000)"]
+        INPUT_LABOR --> INPUT_ACC["Input Aksesoris/Karet per Pcs: Rp 5.000 (Total Rp 100.000)"]
+        INPUT_ACC --> SUM_PROD_COST["Total Biaya Produksi = Rp 1.000.000 + 300.000 + 100.000 = Rp 1.400.000"]
+        SUM_PROD_COST --> UNIT_COST_CALC["HPP Komposit Produk Jadi = Rp 1.400.000 / 20 = Rp 70.000 / Pcs"]
+    end
 
-| Satuan Jual | Kebutuhan Bahan | HPP per Pcs | Skema Penetapan | Harga Jual | Estimasi Profit |
-| :--- | :---: | :---: | :--- | :---: | :---: |
-| **Sprei M** | 2.0 Meter | $2.0 \times 20.000 = \text{Rp } 40.000$ | Manual Rp | **Rp 60.000** | Rp 20.000 (+50.0%) |
-| **Sprei L** | 2.5 Meter | $2.5 \times 20.000 = \text{Rp } 50.000$ | Margin +40% | **Rp 70.000** | Rp 20.000 (+40.0%) |
-| **Sprei XL** | 3.0 Meter | $3.0 \times 20.000 = \text{Rp } 60.000$ | Margin +50% | **Rp 90.000** | Rp 30.000 (+50.0%) |
-
----
-
-### 3.3 🟢 `[TAMBAH v1.3]` Skenario Kasus Kacamata (Inbound Margin Auto-Sync & Historical Freeze)
-
-> **Studi Kasus:**
-> Pemilik usaha melakukan setup Master Item baru bernama **"Kacamata"** dengan Satuan Dasar **PCS**.
-> Pada setup satuan jual, didaftarkan varian **"Kacamata Hitam"** (konversi: 1.0 PCS) dengan metode harga **% Margin 50%**.
-> Karena barang ini baru dan belum pernah ada transaksi pembelian restock yang dicatat, maka saat disimpan, harga jual awal adalah **Rp 0** (HPP awal 0).
->
-> **Tantangan Bisnis:**
-> Ketika pemilik usaha mencatat pembelian perdana (misal: 10 PCS @ Rp 100.000), sistem sebelumnya tidak memperbarui harga jual di Produk & Satuan, sehingga kasir melihat harga Rp 0 atau pemilik toko harus mengedit manual ulang.
->
-> **Solusi Sistem v1.3.0 (Opsi 1):**
-> 1. **Auto-Generate on Inbound:** Saat transaksi pembelian dicatat di modul Pembelian, sistem secara reaktif menghitung HPP tertimbang batch aktif dan langsung meng-update `product_units.selling_price` menjadi:
->    $$\text{Harga Jual Baru} = \text{HPP Dasar} \times \text{Konversi} \times (1 + \text{Margin \%}) = 100.000 \times 1.0 \times 1.5 = \mathbf{\text{Rp } 150.000}$$
-> 2. **Perlindungan Integritas Data Historis (*Historical Snapshot Guarantee*):**
->    Ketika di masa depan terjadi restock berikutnya dengan harga modal baru (misal Rp 200.000) yang menyebabkan harga jual katalog naik menjadi Rp 228.947, **seluruh transaksi penjualan yang telah terjadi sebelumnya TIDAK IKUT TERUBAH**. Nilai harga jual dan harga modal masa lalu tetap terkunci permanen pada snapshot tabel `transaction_items.unit_price` dan `cost_price`.
+    subgraph EXEC_PRODUCTION["Eksekusi SPK Selesai (Atomic Database Transaction)"]
+        UNIT_COST_CALC --> DEDUCT_RAW["1. Potong 50 Meter Kain Katun dari Batch Mentah Terlama (FIFO)"]
+        DEDUCT_RAW --> CREATE_FG_BATCH["2. Terbitkan Batch Baru di inventory_batches:<br>• Nama: Sprei Ukuran L<br>• Qty Awal: 20 Pcs<br>• HPP Dasar: Rp 70.000 / Pcs"]
+        CREATE_FG_BATCH --> RECORD_SPK["3. Simpan Riwayat SPK di tabel 'productions' (No: PRD-202611-0001, Status: DONE)"]
+        RECORD_SPK --> READY_DISPLAY["4. 20 Pcs Sprei L Siap Muncul di Kasir POS dengan HPP Akurat Rp 70.000"]
+    end
+```
 
 ---
 
-## 4. DETIL PERUBAHAN FITUR (GAP & CHANGE HIGHLIGHTS v1.3.0)
+### 3.5 Alur Kasir POS, Split Multi-Payment & Rekonsiliasi Jurnal Keuangan
 
-### 4.1 Modul Pembelian & Restock (`InventoryService` & `Purchases.js`)
-* 🟢 `[TAMBAH v1.3]` **Otomatisasi Sinkronisasi Harga Margin pada Pembelian:**
-  * Setelah batch inventori (`inventory_batches`) berhasil dibuat, `InventoryService.recordPurchase` secara otomatis memanggil `PricingService.syncItemMarginPrices(trx, itemId/itemName)`.
-  * Sistem mengidentifikasi semua unit satuan aktif milik barang tersebut yang memiliki metode `percentage_margin` dan menghitung harga jual barunya.
-  * Hasil sinkronisasi (`autoUpdatedPrices`) dikembalikan dalam response API pembelian.
-* 🟡 `[UBAH v1.3]` **Notifikasi Toast Informatif:**
-  * Antarmuka web kasir/owner menampilkan toast dinamis jika ada harga jual yang terupdate otomatis, contoh:
-    > *"Pembelian berhasil! 1 harga jual satuan (% margin) otomatis diperbarui: Kacamata Hitam: Rp 150.000"*
+```mermaid
+flowchart TD
+    START_POS["Kasir Membuka Modul POS Kasir"] --> CHOOSE_ITEMS["Pilih Produk ke Keranjang (Reguler / Alokasi / Bundle)"]
+    CHOOSE_ITEMS --> SET_BACKDATE["Set Tanggal Transaksi: Waktu Sekarang atau Backdate (Historis)"]
+    SET_BACKDATE --> CHOOSE_SPLIT{"Jenis Pembayaran Pelanggan"}
 
-### 4.2 Modul Pricing & Model (`PricingService`)
-* 🟢 `[TAMBAH v1.3]` **Method `syncItemMarginPrices(trx, itemNameOrId)`:**
-  * Menghitung *weighted average base cost* dari seluruh batch aktif (`remaining_quantity > 0`).
-  * Mengabaikan batch kosong demi akurasi HPP berjalan.
-  * Mengupdate kolom `product_units.selling_price` dan `updated_at` secara transaksional (*atomic*).
+    subgraph SINGLE_PAY_FLOW["Opsi A: Single Payment"]
+        CHOOSE_SPLIT -->|"Satu Metode Saja"| SINGLE_METHOD{"Pilih Kanal"}
+        SINGLE_METHOD -->|"CASH"| S_CASH["Input Nominal Tunai ➔ Hitung Kembalian ➔ Kode Jurnal: CSH1"]
+        SINGLE_METHOD -->|"TRANSFER"| S_TRF["Pilih Bank Tujuan (BCA/Mandiri) ➔ Kode Jurnal: BNK1"]
+        SINGLE_METHOD -->|"QRIS"| S_QRIS["Scan QRIS Statis/Dinamis ➔ Kode Jurnal: QRIS1"]
+    end
 
-### 4.3 Modul POS Kasir (`POSComponent`)
-* 🟢 `[TAMBAH v1.2]` **Input Tanggal Transaksi (Backdate):**
-  * Ditambahkan field `📅 Tanggal Transaksi` (`<input type="datetime-local" id="txDate">`) pada panel checkout keranjang kasir.
-  * Dilengkapi tombol shortcut **"Sekarang"** yang mengembalikan tanggal dan jam ke waktu saat ini.
-  * Memungkinkan input transaksi pada periode tanggal lampau (contoh: `2026-08-15 14:30`) untuk migrasi data penjualan sebelum sistem diterapkan.
-* 🟢 `[TAMBAH v1.2]` **Penerusan Parameter Tanggal ke API:**
-  * Payload checkout menyertakan `transactionDate: ISOString`.
-  * Database menyimpan `transactions.transaction_date` dan `transaction_items.created_at` sesuai nilai backdate yang dipilih.
+    subgraph MULTI_PAY_FLOW["Opsi B: Split Multi-Payment (Contoh: Total Rp 500.000)"]
+        CHOOSE_SPLIT -->|"Split Pembayaran"| INPUT_SPLIT["Kasir Menambah Kanal Pembayaran:"]
+        INPUT_SPLIT --> SPLIT_1["Kanal 1: CASH Rp 200.000 (Jurnal: CSH1)"]
+        INPUT_SPLIT --> SPLIT_2["Kanal 2: TRANSFER Rp 300.000 (Jurnal: BNK1)"]
+        SPLIT_1 & SPLIT_2 --> VALIDATE_SUM{"Validasi: Total Bayar >= Total Tagihan?"}
+        VALIDATE_SUM -->|"Kurang"| ERR_SPLIT["Peringatan: Jumlah Pembayaran Masih Kurang"]
+        VALIDATE_SUM -->|"Sesuai / Lebih"| OK_SPLIT["Valid: Set is_split = true & Hitung Kembalian Tunai"]
+    end
 
-### 4.4 Modul Produk & Satuan (`ProductsComponent`)
-* 🟡 `[UBAH v1.2]` **Reset Bersih Daftar Baris Satuan Jual:**
-  * Setiap kali formulir setup dibuka (baik setup barang baru maupun pilih barang dari daftar), daftar baris satuan jual **selalu di-reset bersih** (menghapus baris contoh statis yang tidak relevan).
-* 🟢 `[TAMBAH v1.2]` **Sinkronisasi Dinamis Label Kebutuhan Stok:**
-  * Kolom header tabel: `Kebutuhan (<span class="lblBaseUnit">...</span>)`.
-  * Nilai label otomatis berubah mengikuti isi pengetikan pada textbox *Satuan Dasar Perhitungan Stok* (`muBaseUnit`) secara *real-time* (contoh: jika user mengetik `Yard`, label langsung berubah menjadi `Kebutuhan (Yard)`).
-* 🟡 `[UBAH v1.2]` **Pembaruan Teks Caption Petunjuk:**
-  * Teks panduan di atas tabel satuan jual diperbarui menjadi:
-    > *"Tentukan ukuran pecahan eceran anda (misal: satuan jual 1 Sprei M butuh 2.0 Satuan Dasar Perhitungan Stok (sebagai contoh : meter) dan  Sprei L butuh 2.5 Satuan Dasar Perhitungan Stok (sebagai contoh : meter). Sistem akan menghitung HPP otomatis berdasarkan harga modal per meter di gudang."*
-
-### 4.5 Modul Laporan Keuangan (`ReportService`)
-* 🟢 `[TAMBAH v1.2]` **Normalisasi Rentang Waktu Tanggal:**
-  * Fungsi pembacaan laporan (Penjualan, Detail Item, Laba Rugi, Performa Kasir) kini menormalkan batas `startDate` menjadi `00:00:00` dan `endDate` menjadi `23:59:59`.
-  * Memastikan transaksi backdate yang diinput dengan jam berapa pun dalam tanggal tersebut terhitung 100% akurat dalam rentang periode filter.
-
-### 4.6 🟢 `[TAMBAH v1.4]` Modul Pemeliharaan & Reset Data Developer (`DeveloperService` & `DeveloperComponent`)
-* **Isolasi Tampilan Antarmuka Khusus Role Developer:**
-  * Pengguna dengan role `developer` saat login **hanya disuguhkan 1 menu tunggal**: *Developer Maintenance*.
-  * Seluruh navigasi kasir (POS), stok gudang, pembelian, supplier, laporan, user management, dan settings disembunyikan total demi keamanan operasional.
-  * Percobaan navigasi ke rute halaman lain secara otomatis dialihkan kembali ke panel developer.
-* **Formulir Penghapusan Data Fleksibel & Terfilter:**
-  * **Opsi 1 — Wipe All Data (`mode: 'all'`):** Menghapus seluruh data transaksi penjualan, nota pembelian, batch persediaan FIFO, satuan jual katalog, master barang, data supplier, dan biaya operasional. Akun pengguna dan konfigurasi toko tetap terlindungi.
-  * **Opsi 2 — Filtered Deletion (`mode: 'filtered'`):** Memungkinkan developer memilih form/modul mana saja yang ingin dibersihkan (Transaksi POS, Pembelian & Batch, Biaya, Produk, Item, Supplier) dalam rentang tanggal tertentu (`startDate` s/d `endDate`).
-* **Proteksi Integritas Foreign Key & Keamanan:**
-  * Eksekusi penghapusan berjalan dalam *database transaction* dengan urutan pembersihan terbalik (*reverse dependency*) untuk mencegah kegagalan relasi foreign key.
-  * Dilengkapi konfirmasi ketik kata `"DELETE"` untuk mencegah eksekusi yang tidak disengaja.
+    subgraph COMMIT_TRANSACTION["Eksekusi Penyimpanan Database Atomic"]
+        S_CASH & S_TRF & S_QRIS & OK_SPLIT --> ATOMIC_SAVE["Database Transaction (Knex.js):<br>1. Simpan Header Transaksi (tabel 'transactions')<br>2. Simpan Rincian Pembayaran (tabel 'transaction_payments')<br>3. Simpan Snapshot Penjualan (tabel 'transaction_items')<br>4. Potong Stok Batch FIFO Terlama"]
+        ATOMIC_SAVE --> PRINT_RECEIPT["Cetak Struk Transaksi (Rincian Kanal Split Tercetak Jelas)"]
+        ATOMIC_SAVE --> CASH_SETTLEMENT["Rekonsiliasi Kasir & Laporan Per Kanal:<br>• Setoran Fisik Laci Kasir (CSH1)<br>• Mutasi Rekening Bank (BNK1)<br>• Settlement QRIS E-Wallet (QRIS1)"]
+    end
+```
 
 ---
 
-## 4. 🟢 [TAMBAH v1.5] SPESIFIKASI SISTEM DESAIN & UI THEME OVERHAUL (INVO. DESIGN SYSTEM)
+## 4. DETIL PERUBAHAN FITUR (GAP & FEATURE HIGHLIGHTS v1.7.0)
 
-Untuk meningkatkan standar visual estetika, pengalaman pengguna (*User Experience / UX*), serta memberikan nuansa aplikasi enterprise modern kelas atas setara SaaS global, antarmuka sistem dirombak menyeluruh mengacu pada desain **Invo. Modern SaaS Dashboard**:
+### 4.1 Modul Produksi Konveksi & SPK Jahit (`ProductionService` & `Productions.js`)
+* 🟢 `[TAMBAH v1.7]` **Fungsi `ProductionService.calculateEstimate`:**
+  * Menghitung kebutuhan bahan mentah: $\text{Kebutuhan Meter} = \text{Qty Jadi} \times \text{Konversi}$.
+  * Menghitung biaya bahan baku dari batch FIFO terlama yang aktif.
+  * Menghitung total biaya: $\text{Total Cost} = \text{Biaya Bahan} + (\text{Ongkos Jahit} \times \text{Qty}) + (\text{Biaya Aksesoris} \times \text{Qty})$.
+  * Menghitung **HPP Komposit Satuan Jadi**: $\text{Unit Cost} = \text{Total Cost} / \text{Qty Jadi}$.
+* 🟢 `[TAMBAH v1.7]` **Fungsi `ProductionService.executeProduction`:**
+  * Memotong stok bahan mentah dari `inventory_batches` lapisan tertua secara atomik.
+  * Menerbitkan batch persediaan baru di `inventory_batches` untuk varian produk jadi dengan HPP komposit tersebut.
+  * Menyimpan riwayat produksi ke tabel `productions` dengan kode unik format `PRD-YYYYMM-XXXX`.
 
-### 4.1 Elemen Desain Kunci (Design System Tokens)
-* **Warna Utama (Electric Blue Brand):**
-  * `Primary Accent`: `#1a62ff` (Vibrant Electric Blue)
-  * `Primary Hover`: `#0d52e6`
-  * `Primary Shadow / Glow`: `0 8px 18px -4px rgba(26, 98, 255, 0.4)`
-  * `Canvas / Background`: `#f4f6fb` (Ultra-soft Cool Grayish White)
-  * `Surface / Cards`: `#ffffff` dengan border halus `1px solid rgba(226, 232, 240, 0.8)` dan bayangan lembut.
-* **Tipografi Modern:**
-  * Font Family: `'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`.
-* **Desktop Window Wrapper & Mac Decorative Dots:**
-  * Menyelubungi viewport konten dengan aksen jendela desktop modern berujung membulat (*border-radius: 20px*).
-  * Dihiasi tombol jendela 3 titik khas macOS di sudut kiri atas: 🔴 `#ff5f56` (Close), 🟡 `#ffbd2e` (Minimize), 🟢 `#27c93f` (Maximize).
-* **Identitas Brand & Logo 3D:**
-  * Logo kubus isometrik 3D biru gradien dengan teks tebal berkarakter: **`Invo.`**
+### 4.2 Modul Hutang Dagang Supplier & Termin Pembayaran (`PurchaseService` & `Purchases.js`)
+* 🟢 `[TAMBAH v1.7]` **Termin Pembayaran Fleksibel (Payment Terms):**
+  * Mendukung opsi termin: `cash`, `net_15`, `net_30`, `net_60`, dan `custom`.
+  * Otomatisasi tanggal jatuh tempo (*due date*) sesuai pilihan termin.
+  * Status pembayaran: `paid` (lunas), `partially_paid` (sebagian), dan `not_paid` (belum bayar).
+* 🟢 `[TAMBAH v1.7]` **Tabel Pembayaran Cicilan (`purchase_payments`):**
+  * Mencatat setiap transaksi pembayaran hutang ke supplier (nominal, tanggal, metode kas/bank, dan catatan).
+* 🟢 `[TAMBAH v1.7]` **Laporan Umur Hutang (Aged Payables Report):**
+  * Mengelompokkan kewajiban hutang supplier ke dalam rentang: *Current (Belum Jatuh Tempo)*, *1-30 Hari*, *31-60 Hari*, *61-90 Hari*, dan *>90 Hari Terlambat*.
 
-### 4.2 Struktur Layout Dashboard 3 Baris (3-Row Executive Dashboard)
-1. **Top Row (4 Stat Cards Pastel):**
-   * *Total Revenue (Pendapatan):* Icon bulat oranye pastel (`#fff7ed` / `#ea580c`), trend pill hijau (`341 ↑`).
-   * *Invoices / Transaksi:* Icon bulat hijau pastel (`#f0fdf4` / `#16a34a`), trend pill hijau (`121 ↑`).
-   * *Clients / Pelanggan & Reseller:* Icon bulat biru muda pastel (`#eff6ff` / `#2563eb`), trend pill hijau (`51 ↑`).
-   * *Loyalty / Retensi:* Icon bulat pink pastel (`#fdf2f8` / `#db2777`), trend pill merah (`1% ↓`).
-2. **Middle Row (Grafik Batang Vertikal & Kartu Promosi):**
-   * *Monthly Revenue Bar Chart:* Visualisasi batang vertikal bulanan dengan sudut membulat (*rounded bars*). Batang aktif/bulan berjalan disorot warna Electric Blue dengan *floating dark tooltip pill* (contoh: `Rp 15.000.000`).
-   * *Promotional Action Card:* Kartu bergradasi royal blue mewah (`linear-gradient(145deg, #0d5bff, #1a62ff)`), lencana putih `NEW`, teks promosi tebal, dan tombol aksi putih melengkung (*pill button* "Buka POS Kasir").
-3. **Bottom Row (Recent Activities & Invoices Table):**
-   * *Recent Activities Feed:* Daftar interaksi terkini dengan avatar user, tag kategori hijau (`New Invoice`), deskripsi transaksi, dan waktu relatif.
-   * *Recent Invoices Clean Table:* Tabel transaksi bersih dan rapi dengan kolom No, Tanggal, Pelanggan, Nominal, serta status pembayaran ber-badge rounded (*PAID* hijau, *PENDING* oranye, *OVERDUE* merah).
+### 4.3 Modul Split Multi-Payment & Multi-Journal Kasir (`TransactionService` & `POS.js`)
+* 🟢 `[TAMBAH v1.7]` **Penyimpanan Multi-Kanal Pembayaran (`transaction_payments`):**
+  * Mendukung pelunasan kasir dengan kombinasi kanal bayar.
+  * Menyimpan kode jurnal akuntansi: `CSH1` (Kas Toko), `BNK1` (Bank BCA/Mandiri), `QRIS1` (QRIS Settlement).
+  * Validasi over-payment pada kanal non-tunai (uang kembalian hanya diperbolehkan jika berasal dari porsi tunai).
 
-### 4.3 Navigasi Sidebar Kapsul Pil (Pill-Shaped Capsule Navigation)
-* Menu aktif ditandai dengan kapsul pil biru elektrik bergradasi halus dan bayangan menyala lembut (*glowing electric blue pill*).
-* **Pelestarian Nomenklatur & Fungsi Menu Orisinal:** Seluruh teks menu navigasi mempertahankan penamaan fungsional bahasa Indonesia versi sebelumnya (`📊 Dashboard`, `🛒 POS Kasir` / `🛒 POS Penjualan`, `📦 Stok Barang`, `🧾 Riwayat Transaksi`, `📥 Pembelian / Restock`, `🏷️ Produk & Satuan`, `🤝 Supplier`, `💸 Pengeluaran`, `📈 Laporan`, `👥 User Management`, `⚙️ Pengaturan`, dan `🛠️ Developer Maintenance`).
-* Setiap menu yang diklik memicu router `App.navigate(page)` dengan pembaruan dinamis `pageTitle`, inisialisasi tombol aksi `headerActions` (seperti tombol ➕ Tambah Produk, Tambah Supplier, dll), dan perenderan modul terkait tanpa kehilangan fungsionalitas.
+### 4.4 Modul Repackage & Alokasi Stok Fisik (`InventoryService` & `ProductsComponent`)
+* Mengizinkan pembagian stok gudang menjadi kuota kemasan fisik siap jual (Box, Lusin, PCS promo) dengan perlindungan anti over-allocation dan tombol reset instan ke floating pool.
 
-### 4.4 Peremajaan Halaman Login & Sub-Halaman
-* Halaman login diselaraskan dengan logo kubus 3D `Invo.`, tipografi Plus Jakarta Sans, dan kartu putih melengkung modern.
-* Seluruh sub-halaman (POS Kasir, Produk & Satuan, Pembelian, Riwayat Transaksi, Laporan, dan Panel Developer) terbungkus harmonis dalam tema Invo tanpa merusak fungsionalitas dan reaktivitas DOM.
+### 4.5 Modul Composite Bundling & Resep Hampers (`InventoryService` & `ProductsComponent`)
+* Mengizinkan perakitan paket multi-item berdasarkan resep (*Bill of Materials*), menghitung kapasitas bottleneck secara dinamis, dan memotong multi-komponen FIFO saat checkout.
 
 ---
 
-## 5. SKEMA DATABASE TERKINI (DATABASE SCHEMA v1.5.0)
+## 5. SKEMA DATABASE TERKINI (DATABASE SCHEMA v1.7.0)
 
 ```mermaid
 erDiagram
@@ -231,77 +327,222 @@ erDiagram
         string name
         string email UK
         string password_hash
-        string role "owner, cashier, reseller, 🟢 developer (v1.4)"
+        string role "owner, cashier, reseller, developer"
         boolean is_active
         timestamp created_at
         timestamp updated_at
     }
 
+    items {
+        int id PK
+        string name
+        string base_unit
+        string category "raw, manufactured, retail, bundle"
+        text description
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    product_units {
+        int id PK
+        int item_id FK
+        string item_name
+        string unit_name
+        decimal conversion_factor
+        string pricing_method "manual, percentage_margin"
+        decimal margin_percentage
+        decimal selling_price
+        boolean is_active
+        boolean reseller_visible
+        string stock_mode "floating, allocated"
+        decimal allocated_stock
+        boolean is_bundle
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    bundle_items {
+        int id PK
+        int bundle_unit_id FK
+        int component_item_id FK
+        string component_item_name
+        decimal quantity_needed
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    productions {
+        int id PK
+        string production_number UK
+        date production_date
+        int raw_item_id FK
+        int product_unit_id FK
+        decimal quantity_produced
+        decimal base_quantity_used
+        decimal labor_cost_per_unit
+        decimal accessory_cost_per_unit
+        decimal raw_material_cost
+        decimal total_cost
+        decimal unit_cost
+        string tailor_name
+        string status "draft, done, cancelled"
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    suppliers {
+        int id PK
+        string name
+        string phone
+        string email
+        text address
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    purchases {
+        int id PK
+        int supplier_id FK
+        int user_id FK
+        timestamp purchase_date
+        decimal total_cost
+        string payment_term "cash, net_15, net_30, net_60, custom"
+        date due_date
+        string payment_status "paid, not_paid, partially_paid"
+        decimal amount_paid
+        text notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    purchase_payments {
+        int id PK
+        int purchase_id FK
+        int user_id FK
+        date payment_date
+        decimal amount
+        string payment_method "CASH, BANK"
+        text notes
+        timestamp created_at
+    }
+
+    inventory_batches {
+        int id PK
+        int purchase_id FK
+        int item_id FK
+        string item_name
+        decimal initial_quantity
+        decimal remaining_quantity
+        decimal base_cost_price
+        timestamp received_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    transactions {
+        int id PK
+        int user_id FK
+        string customer_name
+        decimal total_amount
+        string payment_method "CASH, TRANSFER, QRIS, SPLIT"
+        string payment_status "paid, pending"
+        decimal amount_paid
+        decimal change_amount
+        boolean is_split
+        timestamp transaction_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    transaction_payments {
+        int id PK
+        int transaction_id FK
+        string payment_method "CASH, TRANSFER, QRIS"
+        string journal_code "CSH1, BNK1, QRIS1"
+        decimal amount
+        decimal tendered_amount
+        decimal change_amount
+        string reference
+        timestamp created_at
+    }
+
+    transaction_items {
+        int id PK
+        int transaction_id FK
+        int batch_id FK
+        int product_unit_id FK
+        decimal quantity_sold
+        decimal base_quantity_deducted
+        decimal unit_price
+        decimal cost_price
+        decimal subtotal_price
+        timestamp created_at
+    }
+
+    expenses {
+        int id PK
+        int user_id FK
+        string category
+        decimal amount
+        text description
+        timestamp expense_date
+        timestamp created_at
+    }
+
+    settings {
+        int id PK
+        string key UK
+        text value
+        timestamp updated_at
+    }
+
     items ||--o{ inventory_batches : "memiliki batch stok"
     items ||--o{ product_units : "memiliki satuan jual"
-    suppliers ||--o{ purchases : "memasok"
-    users ||--o{ purchases : "mencatat"
-    purchases ||--o{ inventory_batches : "menghasilkan"
-    users ||--o{ transactions : "melayani"
-    transactions ||--o{ transaction_items : "terdiri dari"
+    items ||--o{ productions : "sebagai bahan mentah SPK"
+    product_units ||--o{ productions : "sebagai barang jadi SPK"
+    product_units ||--o{ bundle_items : "memiliki resep bahan"
+    items ||--o{ bundle_items : "komponen bahan resep"
+    suppliers ||--o{ purchases : "memasok pesanan"
+    purchases ||--o{ purchase_payments : "dicicil melalui"
+    users ||--o{ purchases : "mencatat pembelian"
+    purchases ||--o{ inventory_batches : "menghasilkan batch"
+    users ||--o{ transactions : "melayani checkout"
+    transactions ||--o{ transaction_payments : "dibayar melalui kanal"
+    transactions ||--o{ transaction_items : "memuat item penjualan"
     product_units ||--o{ transaction_items : "dijual sebagai"
     inventory_batches ||--o{ transaction_items : "dipotong FIFO"
-    users ||--o{ expenses : "mencatat"
+    users ||--o{ expenses : "mencatat biaya operasional"
 ```
-
-* 🟢 `[TAMBAH v1.4]` **Migration `002_add_developer_role.js`:** Memperbarui batasan *CHECK constraint* pada kolom `users.role` SQLite agar mencakup peran `'developer'`.
 
 ---
 
-## 6. SPESIFIKASI ENDPOINT API (REST API v1.4.0)
+## 6. SPESIFIKASI ENDPOINT REST API (API v1.7.0)
 
-### 6.1 Pemeliharaan Data Developer (Khusus Role Developer)
-* 🟢 `[TAMBAH v1.4]` `GET /api/developer/stats`
-  * **Hak Akses:** `authenticate`, `authorize('developer')`
-  * **Response:** Mengembalikan statistik jumlah baris data saat ini dan rentang tanggal (min/max date) untuk transaksi, pembelian, biaya, produk, item, dan supplier.
-* 🟢 `[TAMBAH v1.4]` `POST /api/developer/cleanup`
-  * **Hak Akses:** `authenticate`, `authorize('developer')`
-  * **Payload Request:**
-    ```json
-    {
-      "mode": "filtered", // atau "all"
-      "forms": ["transactions", "purchases", "expenses"],
-      "startDate": "2024-01-01",
-      "endDate": "2024-12-31"
-    }
-    ```
-  * **Response:**
-    ```json
-    {
-      "success": true,
-      "data": {
-        "mode": "filtered",
-        "message": "Data terpilih pada periode yang ditentukan berhasil dihapus.",
-        "deleted": {
-          "transactions": 10,
-          "transactionItems": 24,
-          "inventoryBatches": 5,
-          "purchases": 5,
-          "expenses": 2,
-          "productUnits": 0,
-          "items": 0,
-          "suppliers": 0
-        }
-      }
-    }
-    ```
+### 6.1 SPK Produksi Konveksi (`/api/productions`)
+* `GET /api/productions` — Mengambil seluruh daftar riwayat SPK produksi.
+* `POST /api/productions/estimate` — Menghitung preview estimasi HPP komposit dan validasi stok bahan baku.
+* `POST /api/productions` — Menerbitkan dan mengeksekusi SPK jahit, memotong bahan baku FIFO dan menerbitkan batch barang jadi baru.
+* `GET /api/productions/:id` — Detail dokumen SPK produksi dan rincian biaya.
 
-### 6.2 Pembelian & Inbound Restock
-* 🟡 `[UBAH v1.3]` `POST /api/purchases`
-  * Otomatis memicu sinkronisasi harga jual satuan `% margin` dan mengembalikan `autoUpdatedPrices`.
+### 6.2 Manajemen Hutang Supplier & Pembelian (`/api/purchases`)
+* `POST /api/purchases` — Mencatat pembelian restock (mendukung `paymentTerm`, `dueDate`, `paymentStatus`, dan `amountPaid`).
+* `POST /api/purchases/:id/payments` — Mencatat pembayaran cicilan hutang supplier ke tabel `purchase_payments`.
+* `GET /api/purchases/aged-payables` — Laporan analisis umur hutang supplier (*Aged Payables Summary & Detail*).
 
-### 6.3 Transaksi & Checkout POS
-* 🟡 `[UBAH v1.2]` `POST /api/transactions/checkout`
-  * Mendukung pencatatan backdate historis melalui `transactionDate`.
+### 6.3 Repackage & Alokasi Stok (`/api/products`)
+* `POST /api/products/repackage` — Alokasi kuota fisik per satuan jual dengan validasi anti over-allocation.
+* `POST /api/products/repackage/reset` — Reset kuota fisik kembali ke mode Floating Pool bebas.
 
-### 6.4 Laporan Keuangan
-* 🟡 `[UBAH v1.2]` `GET /api/reports/sales` & `GET /api/reports/profit`
-  * Normalisasi jam batas rentang waktu `00:00:00` s/d `23:59:59`.
+### 6.4 Composite Bundling (`/api/products`)
+* `POST /api/products/bundle` — Pembuatan paket hampers/bundling multi-item dengan resep *Bill of Materials*.
+* `GET /api/products/bundle/:id/recipe` — Melihat rincian komponen bahan penyusun paket hampers.
+
+### 6.5 Checkout POS Kasir & Split Payment (`/api/transactions`)
+* `POST /api/transactions/checkout` — Checkout penjualan kasir dengan dukungan:
+  - Pembayaran tunggal (`paymentMethod`) atau pembayaran ganda (`payments: [{ paymentMethod, journalCode, amount, tenderedAmount }]`).
+  - Pencatatan backdate historis (`transactionDate`).
+  - Pemotongan stok multi-komponen FIFO atomic untuk produk bundling.
 
 ---
 
@@ -311,13 +552,19 @@ erDiagram
 | :---: | :--- | :--- | :---: |
 | **AC-01** | Input Pembelian 1 Kodi bahan mentah XXX seharga Rp 1.200.000 dengan konversi 60 Meter. | Batch FIFO tersimpan 60 Meter dengan HPP Rp 20.000/meter. Barang XXX otomatis ada di master item. | **PASSED** |
 | **AC-02** | Setup Multi-Satuan barang XXX: Sprei M (2m), Sprei L (2.5m, Margin 40%), Sprei XL (3m, Margin 50%) dalam 1 modal. | Ketiga satuan tersimpan sekaligus. Harga Sprei L otomatis Rp 70rb, Sprei XL otomatis Rp 90rb. | **PASSED** |
-| **AC-03** | 🟢 `[TAMBAH v1.2]` Transaksi POS Backdate pada 15 Agustus 2026. | Transaksi tersimpan dengan `transaction_date = 2026-08-15`. Nota struk dan laporan Agustus merekam transaksi ini. | **PASSED** |
-| **AC-04** | 🟢 `[TAMBAH v1.2]` Verifikasi Laporan Periode Backdate (Agustus 2026). | Laporan Penjualan dan Laba Rugi periode Agustus mencatat Omzet Rp 70.000, COGS Rp 20.000, Laba Kotor Rp 50.000. | **PASSED** |
-| **AC-05** | 🟡 `[UBAH v1.2]` Buka Modal Setup Produk Baru. | Daftar satuan jual bersih (tidak ada baris hardcoded), kolom kebutuhan mengikuti nilai textbox Satuan Dasar (`Meter`). | **PASSED** |
-| **AC-06** | 🟡 `[UBAH v1.2]` Ubah Textbox Satuan Dasar ke "Yard". | Header kolom kebutuhan tabel satuan jual seketika berubah menjadi `Kebutuhan (Yard)`. | **PASSED** |
-| **AC-07** | 🟢 `[TAMBAH v1.3]` Setup Barang Kacamata margin 50% (harga awal 0) lalu input Pembelian perdana @ Rp 100.000. | Harga jual `product_units` varian Kacamata Hitam otomatis berubah dari Rp 0 menjadi Rp 150.000. | **PASSED** |
-| **AC-08** | 🟢 `[TAMBAH v1.3]` Transaksi Penjualan Rp 150.000 diikuti Pembelian ke-2 @ Rp 200.000. | Harga jual katalog naik menjadi Rp 228.947, namun snapshot `transaction_items.unit_price` transaksi lama tetap Rp 150.000. | **PASSED** |
-| **AC-09** | 🟢 `[TAMBAH v1.4]` Login dengan akun Role Developer (`developer@pos.com`). | Hanya muncul 1 menu tunggal (Developer Maintenance). Mencoba navigasi rute lain tetap terkunci di menu Developer. Akses API Developer oleh role selain Developer diblokir 403 Forbidden. | **PASSED** |
-| **AC-10** | 🟢 `[TAMBAH v1.4]` Eksekusi penghapusan data terfilter dengan rentang tanggal. | Data pada modul terpilih dalam rentang tanggal terhapus bersih, sedangkan data di luar periode tanggal tetap utuh. | **PASSED** |
-| **AC-11** | 🟢 `[TAMBAH v1.5]` Tampilan Dashboard & Seluruh Halaman dengan Tema Invo. Modern SaaS. | Window wrapper beraksen 3-dots Mac, logo 3D Invo, navigasi kapsul pil menyala `#1a62ff`, 4 stat cards pastel, grafik batang vertikal pendapatan bulanan dengan active tooltip, dan kartu promo tampil presisi, responsif, dan tanpa regresi fungsional. | **PASSED** |
-
+| **AC-03** | Transaksi POS Backdate pada 15 Agustus 2026. | Transaksi tersimpan dengan `transaction_date = 2026-08-15`. Nota struk dan laporan Agustus merekam transaksi ini. | **PASSED** |
+| **AC-04** | Verifikasi Laporan Periode Backdate (Agustus 2026). | Laporan Penjualan dan Laba Rugi periode Agustus mencatat Omzet Rp 70.000, COGS Rp 20.000, Laba Kotor Rp 50.000. | **PASSED** |
+| **AC-05** | Buka Modal Setup Produk Baru & Ubah Textbox Satuan Dasar ke "Yard". | Daftar satuan jual bersih, header kolom kebutuhan tabel satuan jual seketika berubah menjadi `Kebutuhan (Yard)`. | **PASSED** |
+| **AC-06** | Setup Barang Kacamata margin 50% (harga awal 0) lalu input Pembelian perdana @ Rp 100.000. | Harga jual `product_units` varian Kacamata Hitam otomatis berubah dari Rp 0 menjadi Rp 150.000. | **PASSED** |
+| **AC-07** | Transaksi Penjualan Rp 150.000 diikuti Pembelian ke-2 @ Rp 200.000. | Harga jual katalog naik menjadi Rp 228.947, namun snapshot `transaction_items.unit_price` transaksi lama tetap Rp 150.000. | **PASSED** |
+| **AC-08** | Login dengan akun Role Developer (`developer@pos.com`). | Hanya muncul 1 menu tunggal (Developer Maintenance). Mencoba navigasi rute lain tetap terkunci di menu Developer. | **PASSED** |
+| **AC-09** | Eksekusi penghapusan data terfilter dengan rentang tanggal. | Data pada modul terpilih dalam rentang tanggal terhapus bersih, sedangkan data di luar periode tanggal tetap utuh. | **PASSED** |
+| **AC-10** | Tampilan Dashboard & Seluruh Halaman dengan Tema Invo. Modern SaaS. | Window wrapper beraksen 3-dots Mac, logo 3D Invo, navigasi kapsul pil menyala `#1a62ff`, 4 stat cards pastel, dan grafik bulanan tampil presisi. | **PASSED** |
+| **AC-11** | Alokasi Kuota Fisik (Repackage) Valid. | Total alokasi 5 Box, 15 Lusin, 19 PCS (total 449 PCS) berhasil disimpan, `stock_mode` menjadi `allocated`. | **PASSED** |
+| **AC-12** | Proteksi Validasi Over-Allocation Repackage. | Alokasi 10 Box (500 PCS) melebihi stok gudang (399 PCS) ditolak dengan error 400 dan tombol simpan terkunci otomatis. | **PASSED** |
+| **AC-13** | Reset Alokasi Fisik ke Mode Floating Pool Bebas. | Tombol `Reset ke Floating Pool` mengembalikan seluruh satuan ke konversi otomatis on-demand tanpa merusak layer FIFO. | **PASSED** |
+| **AC-14** | Pembuatan Resep Paket Hampers & Deteksi Bottleneck. | Paket hampers buah dengan 4 komponen berhasil dibuat, kapasitas stok siap rakit terdeteksi otomatis dari komponen terendah (*bottleneck*). | **PASSED** |
+| **AC-15** | Checkout Kasir Paket Hampers & Pemotongan Multi-FIFO. | Penjualan 1 Paket Hampers memotong masing-masing komponen dari batch FIFO terlama secara atomic, merekam HPP komposit akurat. | **PASSED** |
+| **AC-16** | 🟢 `[TAMBAH v1.7]` Eksekusi SPK Produksi Konveksi & HPP Komposit. | SPK 20 Pcs Sprei L memotong 50m kain katun secara FIFO, menambahkan ongkos jahit Rp 15rb & aksesoris Rp 5rb, menerbitkan batch baru dengan HPP komposit Rp 70.000/pcs. | **PASSED** |
+| **AC-17** | 🟢 `[TAMBAH v1.7]` Pembelian Kredit Net 30 & Pelunasan Cicilan Hutang. | Pembelian termin Net 30 tercatat dengan status `not_paid` dan due date +30 hari. Input cicilan di `purchase_payments` meng-update sisa hutang dan status menjadi `partially_paid` atau `paid`. | **PASSED** |
+| **AC-18** | 🟢 `[TAMBAH v1.7]` Checkout Kasir Split Multi-Payment. | Transaksi total Rp 500.000 dibayar CASH Rp 200.000 dan TRANSFER Rp 300.000 berhasil disimpan dengan `is_split = true` dan terekam 2 baris jurnal di `transaction_payments`. | **PASSED** |
